@@ -26,3 +26,8 @@ class windmills():
             data[df_name] = pd.read_csv(os.path.join(csv_path, lista[i]), sep=';')
         return  data
 
+    def max_time_intervals(df, time_column):
+        'Verificar o intervalo máximo de tempo que existe entre registos de tempo na mesma coluna'
+        df[time_column] = pd.to_datetime(df[time_column])
+        df['delta'] = (df[time_column]-df[time_column].shift()).fillna(0)
+        return df['delta'].max()
