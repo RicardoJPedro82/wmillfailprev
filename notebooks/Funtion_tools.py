@@ -20,14 +20,27 @@ class windmills():
         #Obter os nomes dos dataframes e criar o dicionário
         for i in range(len(lista)):
             if len(lista[i]) < 22:
-                df_name = lista[i][:(len(lista[i]) - 4)]
+                df_name = lista[i][:(len(lista[i]) - 4)] + '_df'
+                df_name = df_name.replace('-','_')
             else:
-                df_name = lista[i][12:len(lista[i]) - 4]
+                df_name = lista[i][12:len(lista[i]) - 4] + '_df'
+                df_name = df_name.replace('-','_')
             data[df_name] = pd.read_csv(os.path.join(csv_path, lista[i]), sep=';')
         return  data
+
+    def transform_time(df, time_column):
+        'Transformar as colunas referentes a tempo no data typw tempo'
+        df[time_column] = pd.to_datetime(df[time_column])
+        return df
 
     def max_time_intervals(df, time_column):
         'Verificar o intervalo máximo de tempo que existe entre registos de tempo na mesma coluna'
         df[time_column] = pd.to_datetime(df[time_column])
         df['delta'] = (df[time_column]-df[time_column].shift()).fillna(0)
         return df['delta'].max()
+
+    def time_delta(df, time_column):
+        'Adicionar uma coluna de diferenças entre linhas de tempo'
+        df[time_column] = pd.to_datetime(df[time_column])
+        df['delta'] = (df[time_column]-df[time_column].shift()).fillna(0)
+        return df
