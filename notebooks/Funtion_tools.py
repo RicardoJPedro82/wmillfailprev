@@ -26,15 +26,16 @@ def get_data():
     return  data
 
 def power_curve_trans(Dict_df):
-    df = Dict_df['Power_curve_df'].copy
-    df = pd.DataFrame(df['Wind speed (m/s),Power (kW)'].str.split(',',1).tolist(), columns = ['windspeed(m_s)','power(kw)'])
+    df = Dict_df['Power_curve_df'].copy()
+    df = pd.DataFrame(df['Wind speed (m/s),Power (kW)'].str.split(',',1).tolist(),columns = ['windspeed(m_s)','power(kw)'])
     df['windspeed(m_s)'] = df['windspeed(m_s)'].astype('float')
     df['power(kw)'] = df['power(kw)'].astype('int')
     df['power(kw)'].replace(to_replace=2, value=2000, inplace=True)
+    return df
 
 def logs_cols_uniform(df):
     'A partir de uma lista de draframe uniformizar os nomes relacionados com tempo e turbine_ID'
-    df = df.rename(columns={'TimeDetected': 'Timestamp', 'UnitTitle':'Turbine_ID'}, inplace=True)
+    df = df.rename(columns={'TimeDetected': 'Timestamp', 'UnitTitle':'Turbine_ID'})
     return df
 
 def transform_time(df, time_column):
@@ -61,17 +62,18 @@ def time_df(ano=2016, mes=1, dia=1):
         time_list.append(pd.datetime(ano,mes,dia)+pd.Timedelta(minutes=10)*i)
     time_df = pd.DataFrame(time_list, columns={'Timestamp'})
     #Criação de Dataframe vazio para fazer append
-    time_turb_df = pd.DataFrame(index=[0, 1], columns=['Timestamp', 'Turbine_ID'])
-    return time_turb_df
+    time_df = time_df.dropna().reset_index(drop='index')
+    return time_df
 
 def complete_time_df(df, turbine_list):
     # Multiplicar o intervalo de tempo pelas turbinas
     for i in turbine_list:
-        passage = time_df.copy()
+        passage = df.copy()
         passage['Turbine_ID'] = i
-        time_turb_df = pd.concat([time_turb_df, passage])
+        df = pd.concat([df, passage],axis = 0, sort=True)
     # Corrigir o Dataframe
-    time_turb_df = time_turb_df.dropna().reset_index(drop='index')
+    df = df.dropna().reset_index(drop='index')
+    return df
 
 def merge_df(df1, df2, date_until=None, date_after=None):
     'Colocar apenas uma data no formato AAAA-MM-DD HH:MM:SS - fazer o merge dos dataframes respeitando as datas escolhidas para os ficheiros de     teste e treino'
