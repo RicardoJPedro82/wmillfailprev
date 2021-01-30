@@ -67,12 +67,13 @@ def time_df(ano=2016, mes=1, dia=1):
 
 def complete_time_df(df, turbine_list):
     # Multiplicar o intervalo de tempo pelas turbinas
+    df_vazio = pd.DataFrame(index=[0,1], columns=['Timestamp', 'Turbine_ID'])
     for i in turbine_list:
         passage = df.copy()
         passage['Turbine_ID'] = i
-        df = pd.concat([df, passage],axis = 0, sort=True)
+        df_vazio = pd.concat([df_vazio, passage], sort=True)
     # Corrigir o Dataframe
-    df = df.dropna().reset_index(drop='index')
+    df = df_vazio.dropna().reset_index(drop='index')
     return df
 
 def merge_df(df1, df2, date_until=None, date_after=None):
