@@ -3,6 +3,8 @@
 import os
 import pandas as pd
 import datetime
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def get_data():
     data = {}
@@ -93,3 +95,13 @@ def merge_df(df1, df2, date_until=None, date_after=None):
     elif date_until != None and date_after != None:
         return 'Escolher apenas uma das duas datas possiveis'
     return df
+
+
+def barras(x="timepoint", y="signal"):
+    sns.set_theme(style="darkgrid")
+    plt.figure(figsize=(16,9))
+    # Load an example dataset with long-form data
+    fmri = sns.load_dataset("fmri")
+
+    # Plot the responses for different events and regions
+    sns.lineplot(x=fmri.timepoint, y=fmri.signal)
