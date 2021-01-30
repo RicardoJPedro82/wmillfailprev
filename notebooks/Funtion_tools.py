@@ -53,7 +53,7 @@ def time_delta(df, time_column):
     df['delta'] = (df[time_column]-df[time_column].shift()).fillna(0)
     return df
 
-def complete_time_df(turbine_list, ano=2016, mes=1, dia=1):
+def time_df(ano=2016, mes=1, dia=1):
     '''Criar um dataframe a partir de uma data inicial para os próximos dois 2 de 10 em 10 minutos'''
     time_list = []
     # Criar o dataframe de tempo
@@ -62,6 +62,9 @@ def complete_time_df(turbine_list, ano=2016, mes=1, dia=1):
     time_df = pd.DataFrame(time_list, columns={'Timestamp'})
     #Criação de Dataframe vazio para fazer append
     time_turb_df = pd.DataFrame(index=[0, 1], columns=['Timestamp', 'Turbine_ID'])
+    return time_turb_df
+
+def complete_time_df(df, turbine_list):
     # Multiplicar o intervalo de tempo pelas turbinas
     for i in turbine_list:
         passage = time_df.copy()
@@ -69,7 +72,6 @@ def complete_time_df(turbine_list, ano=2016, mes=1, dia=1):
         time_turb_df = pd.concat([time_turb_df, passage])
     # Corrigir o Dataframe
     time_turb_df = time_turb_df.dropna().reset_index(drop='index')
-    return time_turb_df
 
 def merge_df(df1, df2, date_until=None, date_after=None):
     'Colocar apenas uma data no formato AAAA-MM-DD HH:MM:SS - fazer o merge dos dataframes respeitando as datas escolhidas para os ficheiros de     teste e treino'
