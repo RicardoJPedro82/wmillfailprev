@@ -67,7 +67,7 @@ def time_df(ano=2016, mes=1, dia=1):
 def complete_time_df(df, turbine_list):
     # Multiplicar o intervalo de tempo pelas turbinas
     for i in turbine_list:
-        passage = time_df.copy()
+        passage = df.copy()
         passage['Turbine_ID'] = i
         time_turb_df = pd.concat([time_turb_df, passage])
     # Corrigir o Dataframe
