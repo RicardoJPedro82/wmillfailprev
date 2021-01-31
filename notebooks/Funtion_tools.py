@@ -3,6 +3,8 @@
 import os
 import pandas as pd
 import datetime
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def get_data():
     data = {}
@@ -38,17 +40,19 @@ def logs_cols_uniform(df):
     df = df.rename(columns={'TimeDetected': 'Timestamp', 'UnitTitle':'Turbine_ID'})
     return df
 
-def transform_time(df, time_column):
+def transform_time(df, time_column='Timestamp'):
     'Transformar as colunas referentes a tempo no data typw tempo'
-    df[time_column] = pd.to_datetime(df[time_column])
+    df[time_column] = pd.to_datetime(df[time_column].str[:19])
+    # df[time_column] = df[time_column].dt.tz_localize('GMT')
+    # df[time_column] = df[time_column].dt.tz_convert(None)
     return df
 
-def max_time_intervals(df, time_column):
+def max_time_intervals(df, time_column='Timestamp'):
     'Verificar o intervalo máximo de tempo que existe entre registos de tempo na mesma coluna'
     time_delta(df, time_column)
     return df['delta'].max()
 
-def time_delta(df, time_column):
+def time_delta(df, time_column='Timestamp'):
     'Adicionar uma coluna de diferenças entre linhas de tempo'
     transform_time(df, time_column)
     df['delta'] = (df[time_column]-df[time_column].shift()).fillna(0)
@@ -65,7 +69,7 @@ def time_df(ano=2016, mes=1, dia=1):
     time_df = time_df.dropna().reset_index(drop='index')
     return time_df
 
-def complete_time_df(df, turbine_list):
+def complete_time_df(df, turbine_list='T01'):
     # Multiplicar o intervalo de tempo pelas turbinas
     df_vazio = pd.DataFrame(index=[0,1], columns=['Timestamp', 'Turbine_ID'])
     for i in turbine_list:
@@ -91,3 +95,13 @@ def merge_df(df1, df2, date_until=None, date_after=None):
     elif date_until != None and date_after != None:
         return 'Escolher apenas uma das duas datas possiveis'
     return df
+
+
+def barras(x="timepoint", y="signal"):
+    sns.set_theme(style="darkgrid")
+    plt.figure(figsize=(16,9))
+    # Load an example dataset with long-form data
+    fmri = sns.load_dataset("fmri")
+
+    # Plot the responses for different events and regions
+    sns.lineplot(x=fmri.timepoint, y=fmri.signal)
