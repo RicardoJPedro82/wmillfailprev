@@ -96,12 +96,33 @@ def merge_df(df1, df2, date_until=None, date_after=None):
         return 'Escolher apenas uma das duas datas possiveis'
     return df
 
-
-def barras(x="timepoint", y="signal"):
+def graf_linhas(x, y):
+    'Gráfico para variáveis continuas'
     sns.set_theme(style="darkgrid")
     plt.figure(figsize=(16,9))
-    # Load an example dataset with long-form data
-    fmri = sns.load_dataset("fmri")
-
     # Plot the responses for different events and regions
-    sns.lineplot(x=fmri.timepoint, y=fmri.signal)
+    sns.lineplot(x=x, y=y)
+    return
+
+def graf_barras(x, y):
+    'Gráfico de barras para variáveis categóricas - Necessário fazer Dataframe de resumo'
+    plt.figure(figsize=(16,4))
+    sns.barplot(x=x, y=y, palette="deep")
+    return
+
+def graf_scatter(x, y):
+    'ScatterPlot'
+    sns.set_theme(style="darkgrid")
+    sns.scatterplot(x=x, y=y, palette='deep')
+    return
+
+def timestamp_round_down(df, time_column='Timestamp'):
+    'Arredondar os intervalos de tempo para os 10 minutos anteriores'
+    df[time_column] = df.apply(lambda x: x[time_column] - datetime.timedelta(minutes=x[time_column].minute % 10,seconds=x[time_column].second, microseconds=x[time_column].microsecond),axis=1)
+    return df
+
+def timemeasure(df, time_column='Timestamp', time_measure='hour'):
+    'Arredondar os intervalos de tempo a medida de tempo desejada (Dias ou minutos)'
+    if time_measure == 'hour':
+        df[time_column] = df.apply(lambda x: x[time_column] - datetime.timedelta(minutes=x[time_column].minute % 10,seconds=x[time_column].second, microseconds=x[time_column].microsecond),axis=1)
+    return df
