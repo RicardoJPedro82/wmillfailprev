@@ -14,7 +14,7 @@ def get_data():
     #Obter o caminho do ficheiros
     root_dir = os.path.abspath("..//..")
     #Fazer uma lista dos ficheiros na pasta
-    csv_path = os.path.join(root_dir, 'wmillfailprev', 'rawdata')
+    csv_path = os.path.join(root_dir, 'rawdata')
     #Lista dos ficheiros a importar
     lista = os.listdir(csv_path)
     lista = lista[1:]
