@@ -5,6 +5,8 @@ import pandas as pd
 import datetime
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 
 def get_data():
     data = {}
@@ -12,7 +14,7 @@ def get_data():
     #Obter o caminho do ficheiros
     root_dir = os.path.abspath("..//..")
     #Fazer uma lista dos ficheiros na pasta
-    csv_path = os.path.join(root_dir, 'wmillfailprev', 'rawdata')
+    csv_path = os.path.join(root_dir, 'rawdata')
     #Lista dos ficheiros a importar
     lista = os.listdir(csv_path)
     lista = lista[1:]
@@ -40,14 +42,14 @@ def logs_cols_uniform(df):
     df = df.rename(columns={'TimeDetected': 'Timestamp', 'UnitTitle':'Turbine_ID'})
     return df
 
-def transform_time(df, time_column='Timestamp'):
+def time_transform(df, time_column='Timestamp'):
     'Transformar as colunas referentes a tempo no data typw tempo'
     df[time_column] = pd.to_datetime(df[time_column].str[:19])
     # df[time_column] = df[time_column].dt.tz_localize('GMT')
     # df[time_column] = df[time_column].dt.tz_convert(None)
     return df
 
-def max_time_intervals(df, time_column='Timestamp'):
+def time_intervals_max(df, time_column='Timestamp'):
     'Verificar o intervalo máximo de tempo que existe entre registos de tempo na mesma coluna'
     time_delta(df, time_column)
     return df['delta'].max()
@@ -69,7 +71,7 @@ def time_df(ano=2016, mes=1, dia=1):
     time_df = time_df.dropna().reset_index(drop='index')
     return time_df
 
-def complete_time_df(df, turbine_list='T01'):
+def time_complete_df(df, turbine_list='T01'):
     # Multiplicar o intervalo de tempo pelas turbinas
     df_vazio = pd.DataFrame(index=[0,1], columns=['Timestamp', 'Turbine_ID'])
     for i in turbine_list:
@@ -96,12 +98,107 @@ def merge_df(df1, df2, date_until=None, date_after=None):
         return 'Escolher apenas uma das duas datas possiveis'
     return df
 
-
-def barras(x="timepoint", y="signal"):
+def graf_linhas(x, y):
+    'Gráfico para variáveis continuas'
     sns.set_theme(style="darkgrid")
     plt.figure(figsize=(16,9))
-    # Load an example dataset with long-form data
-    fmri = sns.load_dataset("fmri")
-
     # Plot the responses for different events and regions
-    sns.lineplot(x=fmri.timepoint, y=fmri.signal)
+    sns.lineplot(x=x, y=y)
+    return
+
+def graf_barras(x, y):
+    'Gráfico de barras para variáveis categóricas - Necessário fazer Dataframe de resumo'
+    plt.figure(figsize=(16,4))
+    sns.barplot(x=x, y=y, palette="deep")
+    return
+
+def graf_scatter(x, y):
+    'ScatterPlot'
+    sns.set_theme(style="darkgrid")
+    sns.scatterplot(x=x, y=y, palette='deep')
+    return
+
+def timestamp_round_down(df, time_column='Timestamp'):
+    'Arredondar os intervalos de tempo para os 10 minutos anteriores'
+    df[time_column] = df.apply(lambda x: x[time_column] - datetime.timedelta(minutes=x[time_column].minute % 10,seconds=x[time_column].second, microseconds=x[time_column].microsecond),axis=1)
+    return df
+
+def time_measure(df, time_column='Timestamp', time_measure='hour'):
+    'Arredondar os intervalos de tempo a medida de tempo desejada (Dias ou minutos)'
+    if time_measure == 'hour':
+        df[time_column] = df.apply(lambda x: x[time_column] - datetime.timedelta(minutes=x[time_column].minute % 10,seconds=x[time_column].second, microseconds=x[time_column].microsecond),axis=1)
+    return df
+
+def add_features(df_in, rolling_win_size):
+    """Add rolling average and rolling standard deviation for sensors readings using fixed rolling window size.
+    Args:
+            df_in (dataframe)     : The input dataframe to be proccessed (training or test)
+            rolling_win_size (int): The window size, number of cycles for applying the rolling function
+    Returns:
+            dataframe: contains the input dataframe with additional rolling mean and std for each sensor
+    """
+
+    sensor_cols = []
+    for i in df_in.keys()[2:]:
+        sensor_cols.append(i)
+
+    sensor_av_cols = [nm+'_av' for nm in sensor_cols]
+    sensor_sd_cols = [nm+'_sd' for nm in sensor_cols]
+
+    df_out = pd.DataFrame()
+
+    ws = rolling_win_size
+
+    #calculate rolling stats for each engine id
+
+    for m_id in pd.unique(df_in.Turbine_ID):
+
+        # get a subset for each engine sensors
+        df_engine = df_in[df_in['Turbine_ID'] == m_id]
+        df_sub = df_engine[sensor_cols]
+
+        # get rolling mean for the subset
+        av = df_sub.rolling(ws, min_periods=1).mean()
+        av.columns = sensor_av_cols
+
+        # get the rolling standard deviation for the subset
+        sd = df_sub.rolling(ws, min_periods=1).std().fillna(0)
+        sd.columns = sensor_sd_cols
+
+        # combine the two new subset dataframes columns to the engine subset
+        new_ftrs = pd.concat([df_engine,av,sd], axis=1)
+
+        # add the new features rows to the output dataframe
+        df_out = pd.concat([df_out,new_ftrs])
+
+    return df_out
+
+def logs_dummies(df):
+    '''Uniformização da tabela de logs e transformação com get_dummies'''
+    #     Colunas a manter
+    logs_cols_manter = ['Timestamp', 'Turbine_ID', 'Remark']
+    #     Lista de comentários a manter
+    lista_comentarios = [
+        'External power ref.:2000kW', 'Generator 1 in',
+        'Hot HV trafo 270°C      0kW', 'Yaw Speed Exc:  0° Rate:10sec',
+        'GearoilCooler 2, gear:  57°C', 'GearoilCooler 1, gear:  49°C',
+        'Gen. int. vent. 1, temp: 50°C', 'Gen. ext. vent. 1, temp: 50°C',
+        'Gen. int. vent. 0, temp: 34°C', 'Gen. ext. vent. 0, temp: 34°C',
+        'Gen. ext. vent. 2, temp: 65°C', 'Gen. ext. vent. 1, temp: 49°C',
+        'Yawcontr. from:30010 to:30011', 'Yawcontr. from:30011 to:30010',
+        'Accumulator test done -> OK'
+    ]
+    #     Separação de comentários a manter
+    df = df.loc[df['Remark'].isin(lista_comentarios), logs_cols_manter]
+    #     transformação de Get_Dummies
+    df = pd.get_dummies(df, columns=['Remark'])
+    return df
+
+def fail_dummies(df):
+    '''Uniformização da tabela de logs e transformação com get_dummies'''
+    #     Colunas a manter
+    fail_cols_manter = ['Timestamp', 'Turbine_ID', 'Component']
+    df = df[fail_cols_manter]
+    #     transformação de Get_Dummies
+    df = pd.get_dummies(df, columns=['Component'])
+    return df
