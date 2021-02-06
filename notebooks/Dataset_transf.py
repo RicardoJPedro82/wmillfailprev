@@ -184,3 +184,17 @@ def aplic_var_target(df, period):
     nome = nome+'_days'
     df[nome] = df.apply(lambda x: Failure_Time_Horizon(x['TTF'], period),axis=1)
     return df
+
+def prepare_train_df(df):
+    last_date = df['Timestamp'].iloc[-1]
+    split = last_date - pd.DateOffset(months=3)
+    df_train = df[df['Timestamp'] < split]
+    # df_test = df[df['Timestamp'] >= split]
+    return df_train
+
+def prepare_test_df(df):
+    last_date = df['Timestamp'].iloc[-1]
+    split = last_date - pd.DateOffset(months=3)
+    # df_train = df[df['Timestamp'] < split]
+    df_test = df[df['Timestamp'] >= split]
+    return df_test
