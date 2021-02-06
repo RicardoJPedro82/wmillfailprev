@@ -135,8 +135,9 @@ def sig_fail_merge_dfs(sig_df, fail_df, component):
     df_merged = sig_df.merge(fail_df, on=['Timestamp','Turbine_ID'], how='outer')
     # colocar zeros
     df_merged.rename(columns= {'Component_' + component:'Component'}, inplace=True)
-    df_merged['Component'].fillna(0, inplace=True)
-    df_merged.sort_values(['Timestamp'])
+    df_merged['Component'] = df_merged['Component'].fillna(0)
+    df_merged = df_merged.sort_values(by=['Turbine_ID','Timestamp'])
+    df_merged.fillna(0, inplace=True)
     return df_merged
 
 def fill_na_by_turbine(df, turbines_list):
@@ -155,11 +156,12 @@ def fill_na_by_turbine(df, turbines_list):
 
             df_merged['TTF'] = round((df_merged['date'] -
                                       df_merged['Timestamp']) / np.timedelta64(1, 'D'),0)
+            # df_merged = df_merged.fillna(method='Bfill')
         else:
             df_merged = df1
             df_merged['date'] = df_merged['Timestamp']
             df_merged['TTF'] = 0 # df_merged['date'] - df_merged['Timestamp']
-
+            # df_merged = df_merged.fillna(method='Bfill')
         #Drop Column Date
         df_final = df_merged.drop(columns='date')
 
@@ -176,3 +178,23 @@ def Failure_Time_Horizon(days, period):
     else:
         Flag=0
     return Flag
+
+def aplic_var_target(df, period):
+    nome = str(period)
+    nome = nome+'_days'
+    df[nome] = df.apply(lambda x: Failure_Time_Horizon(x['TTF'], period),axis=1)
+    return df
+
+def prepare_train_df(df):
+    last_date = df['Timestamp'].iloc[-1]
+    split = last_date - pd.DateOffset(months=3)
+    df_train = df[df['Timestamp'] < split]
+    # df_test = df[df['Timestamp'] >= split]
+    return df_train
+
+def prepare_test_df(df):
+    last_date = df['Timestamp'].iloc[-1]
+    split = last_date - pd.DateOffset(months=3)
+    # df_train = df[df['Timestamp'] < split]
+    df_test = df[df['Timestamp'] >= split]
+    return df_test
