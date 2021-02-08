@@ -6,8 +6,16 @@ import numpy as np
 import datetime
 import seaborn as sns
 import matplotlib.pyplot as plt
+import Dataset_transf as dprep
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
+from sklearn import metrics, model_selection
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 
 def get_data():
     data = {}
@@ -186,17 +194,27 @@ def aplic_var_target(df, period):
     return df
 
 def prepare_train_df(df, meses=3):
-    last_date = df['Timestamp'].iloc[-1]
-    split = last_date - pd.DateOffset(months=3)
-    df_train = df[df['Timestamp'] < split]
+    if 'Timestamp' in df.keys():
+        last_date = df['Timestamp'].iloc[-1]
+        split = last_date - pd.DateOffset(months=3)
+        df_train = df[df['Timestamp'] < split]
+    else:
+        last_date = df['Date'].iloc[-1]
+        split = last_date - pd.DateOffset(months=3)
+        df_train = df[df['Date'] < split]
+
     # df_test = df[df['Timestamp'] >= split]
     return df_train
 
 def prepare_test_df(df):
-    last_date = df['Timestamp'].iloc[-1]
-    split = last_date - pd.DateOffset(months=3)
-    # df_train = df[df['Timestamp'] < split]
-    df_test = df[df['Timestamp'] >= split]
+    if 'Timestamp' in df.keys():
+        last_date = df['Timestamp'].iloc[-1]
+        split = last_date - pd.DateOffset(months=3)
+        df_test = df[df['Timestamp'] >= split]
+    else:
+        last_date = df['Date'].iloc[-1]
+        split = last_date - pd.DateOffset(months=3)
+        df_test = df[df['Date'] >= split]
     return df_test
 
 def add_features(df_in, rolling_win_size=15):
@@ -257,5 +275,217 @@ def group_por_frequency(df, period='Dia', strategy='mean'):
         df = df.groupby(by=['Turbine_ID','Date']).max().reset_index().drop(columns='Timestamp')
     else:
         df = df.groupby(by=['Turbine_ID','Date']).mean().reset_index()
-
+    df['Date'] = pd.to_datetime(df['Date'])
     return df
+
+#Standard scaler per Turbine
+def scale(df_train, df_test, scaler='StandardScaler'):
+
+    X_train = df_train
+    X_test = df_test
+
+    X_train1 = X_train.loc[X_train['Turbine_ID']=='T01']
+    X_test1 = X_test.loc[X_test['Turbine_ID']=='T01']
+
+    X_train1 = X_train1.drop(columns='Turbine_ID')
+    X_test1 = X_test1.drop(columns='Turbine_ID')
+
+    if scaler == 'MinMaxScaler':
+        sc = MinMaxScaler()
+        X_train1 = sc.fit_transform(X_train1)
+        X_test1 = sc.transform(X_test1)
+    else:
+        sc = StandardScaler()
+        X_train1 = sc.fit_transform(X_train1)
+        X_test1 = sc.transform(X_test1)
+
+    turbines = ['T06', 'T07', 'T09', 'T11']
+    for turbine in turbines:
+        X_train_ = X_train.loc[X_train['Turbine_ID']==turbine]
+        X_test_ = X_test.loc[X_test['Turbine_ID']==turbine]
+
+        X_train_ = X_train_.drop(columns='Turbine_ID')
+        X_test_ = X_test_.drop(columns='Turbine_ID')
+
+        if scaler == 'MinMaxScaler':
+            sc = MinMaxScaler()
+            X_train_ = sc.fit_transform(X_train_)
+            X_test_ = sc.transform(X_test_)
+        else:
+            sc = StandardScaler()
+            X_train_ = sc.fit_transform(X_train_)
+            X_test_ = sc.transform(X_test_)
+
+        X_train1 = np.concatenate((X_train1, X_train_))
+        X_test1 = np.concatenate((X_test1, X_test_))
+
+    return X_train1, X_test1
+
+def bin_classify(model, clf, X_train, X_test, y_train, y_test, params=None, score=None, ):
+    """Perform Grid Search hyper parameter tuning on a classifier.
+    Args:
+        model (str): The model name identifier
+        clf (clssifier object): The classifier to be tuned
+        features (list): The set of input features names
+        params (dict): Grid Search parameters
+        score (str): Grid Search score
+    Returns:
+        Tuned Clssifier object
+        dataframe of model predictions and scores
+    """
+
+    grid_search = model_selection.GridSearchCV(estimator=clf, param_grid=params, cv=5, scoring=score)
+
+    grid_search.fit(X_train, y_train)
+    y_pred = grid_search.predict(X_test)
+
+    if hasattr(grid_search, 'predict_proba'):
+        y_score = grid_search.predict_proba(X_test)[:,1]
+    elif hasattr(grid_search, 'decision_function'):
+        y_score = grid_search.decision_function(X_test)
+    else:
+        y_score = y_pred
+
+    predictions = {'y_pred' : y_pred, 'y_score' : y_score}
+    df_predictions = pd.DataFrame.from_dict(predictions)
+
+    return grid_search.best_estimator_, df_predictions
+
+def bin_class_metrics(model, y_test, y_pred, y_score, print_out=True, plot_out=True):
+    """Calculate main binary classifcation metrics, plot AUC ROC and Precision-Recall curves.
+    Args:
+        model (str): The model name identifier
+        y_test (series): Contains the test label values
+        y_pred (series): Contains the predicted values
+        y_score (series): Contains the predicted scores
+        print_out (bool): Print the classification metrics and thresholds values
+        plot_out (bool): Plot AUC ROC, Precision-Recall, and Threshold curves
+    Returns:
+        dataframe: The combined metrics in single dataframe
+        dataframe: ROC thresholds
+        dataframe: Precision-Recall thresholds
+        Plot: AUC ROC
+        plot: Precision-Recall
+        plot: Precision-Recall threshold; also show the number of engines predicted for maintenace per period (queue).
+        plot: TPR-FPR threshold
+    """
+
+    binclass_metrics = {
+                        'Accuracy' : metrics.accuracy_score(y_test, y_pred),
+                        'Precision' : metrics.precision_score(y_test, y_pred),
+                        'Recall' : metrics.recall_score(y_test, y_pred),
+                        'F1 Score' : metrics.f1_score(y_test, y_pred),
+                        'ROC AUC' : metrics.roc_auc_score(y_test, y_score)
+                       }
+
+    df_metrics = pd.DataFrame.from_dict(binclass_metrics, orient='index')
+    df_metrics.columns = [model]
+
+
+    fpr, tpr, thresh_roc = metrics.roc_curve(y_test, y_score)
+
+    roc_auc = metrics.auc(fpr, tpr)
+
+    engines_roc = []
+    for thr in thresh_roc:
+        engines_roc.append((y_score >= thr).mean())
+
+    engines_roc = np.array(engines_roc)
+
+    roc_thresh = {
+                    'Threshold' : thresh_roc,
+                    'TPR' : tpr,
+                    'FPR' : fpr,
+                    'Que' : engines_roc
+                 }
+
+    df_roc_thresh = pd.DataFrame.from_dict(roc_thresh)
+
+    #calculate other classification metrics: TP, FP, TN, FN, TNR, FNR
+    #from ground truth file, positive class = 25 => TP + FN = 25
+    #from ground truth file, negative class = 75 => TN + FP = 75
+
+    df_roc_thresh['TP'] = (25*df_roc_thresh.TPR).astype(int)
+    df_roc_thresh['FP'] = (25 - (25*df_roc_thresh.TPR)).astype(int)
+    df_roc_thresh['TN'] = (75*(1 - df_roc_thresh.FPR)).astype(int)
+    df_roc_thresh['FN'] = (75 - (75*(1 - df_roc_thresh.FPR))).astype(int)
+
+    df_roc_thresh['TNR'] = df_roc_thresh['TN']/(df_roc_thresh['TN'] + df_roc_thresh['FN'])
+    df_roc_thresh['FNR'] = df_roc_thresh['TN']/(df_roc_thresh['TN'] + df_roc_thresh['FP'])
+
+    df_roc_thresh['Model'] = model
+
+
+
+    precision, recall, thresh_prc = metrics.precision_recall_curve(y_test, y_score)
+
+    thresh_prc = np.append(thresh_prc,1)
+
+    engines_prc = []
+    for thr in thresh_prc:
+        engines_prc.append((y_score >= thr).mean())
+
+    engines_prc = np.array(engines_prc)
+
+    prc_thresh = {
+                    'Threshold' : thresh_prc,
+                    'Precision' : precision,
+                    'Recall' : recall,
+                    'Que' : engines_prc
+                 }
+
+    df_prc_thresh = pd.DataFrame.from_dict(prc_thresh)
+    cf_matrix = metrics.confusion_matrix(y_test, y_pred)
+
+    # if print_out:
+    #     print('-----------------------------------------------------------')
+    #     print(model, '\n')
+    #     print('Confusion Matrix:')
+    #     print(cf_matrix)
+    #     print('\nClassification Report:')
+    #     print(metrics.classification_report(y_test, y_pred))
+    #     print('\nMetrics:')
+    #     print(df_metrics)
+
+    #     print('\nROC Thresholds:\n')
+    #     print(df_roc_thresh[['Threshold', 'TP', 'FP', 'TN', 'FN', 'TPR', 'FPR', 'TNR','FNR', 'Que']])
+
+    #     print('\nPrecision-Recall Thresholds:\n')
+    #     print(df_prc_thresh[['Threshold', 'Precision', 'Recall', 'Que']])
+
+    if plot_out:
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, sharex=False, sharey=False )
+        fig.set_size_inches(10,10)
+
+        ax1.plot(fpr, tpr, color='darkorange', lw=2, label='AUC = %0.2f'% roc_auc)
+        ax1.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        ax1.set_xlim([-0.05, 1.0])
+        ax1.set_ylim([0.0, 1.05])
+        ax1.set_xlabel('False Positive Rate')
+        ax1.set_ylabel('True Positive Rate')
+        ax1.legend(loc="lower right", fontsize='small')
+
+        ax2.plot(recall, precision, color='blue', lw=2, label='Precision-Recall curve')
+        ax2.set_xlim([0.0, 1.0])
+        ax2.set_ylim([0.0, 1.05])
+        ax2.set_xlabel('Recall')
+        ax2.set_ylabel('Precision')
+        ax2.legend(loc="lower left", fontsize='small')
+
+        ax3.plot(thresh_roc, fpr, color='red', lw=2, label='FPR')
+        ax3.plot(thresh_roc, tpr, color='green',label='TPR')
+        ax3.plot(thresh_roc, engines_roc, color='blue',label='Engines')
+        ax3.set_ylim([0.0, 1.05])
+        ax3.set_xlabel('Threshold')
+        ax3.set_ylabel('%')
+        ax3.legend(loc='upper right', fontsize='small')
+
+        ax4.plot(thresh_prc, precision, color='red', lw=2, label='Precision')
+        ax4.plot(thresh_prc, recall, color='green',label='Recall')
+        ax4.plot(thresh_prc, engines_prc, color='blue',label='Engines')
+        ax4.set_ylim([0.0, 1.05])
+        ax4.set_xlabel('Threshold')
+        ax4.set_ylabel('%')
+        ax4.legend(loc='lower left', fontsize='small')
+
+    return  df_metrics, df_roc_thresh, df_prc_thresh, cf_matrix
