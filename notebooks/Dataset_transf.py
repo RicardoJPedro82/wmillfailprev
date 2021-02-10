@@ -98,7 +98,7 @@ def component_df_creation(df):
     df_generator = df[time_id + pair_gen + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
     df_gen_bear = df[time_id + pair_gen + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
     df_transformer = df[time_id + pair_trafo + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_vol]
-    df_hydraulic = df[time_id + pair_hyd + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus]
+    df_hydraulic = df[time_id + pair_hyd + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_vol]
     df_gearbox = df[time_id + pair_gear + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
 
     return df_generator, df_gen_bear, df_transformer, df_hydraulic, df_gearbox
@@ -196,24 +196,24 @@ def aplic_var_target(df, period):
 def prepare_train_df(df, meses=3):
     if 'Timestamp' in df.keys():
         last_date = df['Timestamp'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_train = df[df['Timestamp'] < split]
     else:
         last_date = df['Date'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_train = df[df['Date'] < split]
 
     # df_test = df[df['Timestamp'] >= split]
     return df_train
 
-def prepare_test_df(df):
+def prepare_test_df(df, meses=3):
     if 'Timestamp' in df.keys():
         last_date = df['Timestamp'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_test = df[df['Timestamp'] >= split]
     else:
         last_date = df['Date'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_test = df[df['Date'] >= split]
     return df_test
 
@@ -259,7 +259,7 @@ def add_features(df_in, rolling_win_size=15):
 
         # add the new features rows to the output dataframe
         df_out = pd.concat([df_out,new_ftrs])
-
+    df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
 
 def group_por_frequency(df, period='Dia', strategy='mean'):
