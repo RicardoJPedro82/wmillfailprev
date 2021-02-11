@@ -98,7 +98,7 @@ def component_df_creation(df):
     df_generator = df[time_id + pair_gen + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
     df_gen_bear = df[time_id + pair_gen + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
     df_transformer = df[time_id + pair_trafo + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_vol]
-    df_hydraulic = df[time_id + pair_hyd + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus]
+    df_hydraulic = df[time_id + pair_hyd + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_vol]
     df_gearbox = df[time_id + pair_gear + pair_rot + pair_amb + pair_blds + pair_cont + pair_nac + pair_spin + pair_bus + pair_hyd]
 
     return df_generator, df_gen_bear, df_transformer, df_hydraulic, df_gearbox
@@ -196,24 +196,24 @@ def aplic_var_target(df, period):
 def prepare_train_df(df, meses=3):
     if 'Timestamp' in df.keys():
         last_date = df['Timestamp'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_train = df[df['Timestamp'] < split]
     else:
         last_date = df['Date'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_train = df[df['Date'] < split]
 
     # df_test = df[df['Timestamp'] >= split]
     return df_train
 
-def prepare_test_df(df):
+def prepare_test_df(df, meses=3):
     if 'Timestamp' in df.keys():
         last_date = df['Timestamp'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_test = df[df['Timestamp'] >= split]
     else:
         last_date = df['Date'].iloc[-1]
-        split = last_date - pd.DateOffset(months=3)
+        split = last_date - pd.DateOffset(months=meses)
         df_test = df[df['Date'] >= split]
     return df_test
 
@@ -259,7 +259,7 @@ def add_features(df_in, rolling_win_size=15):
 
         # add the new features rows to the output dataframe
         df_out = pd.concat([df_out,new_ftrs])
-
+    df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
 
 def group_por_frequency(df, period='Dia', strategy='mean'):
@@ -489,3 +489,110 @@ def bin_class_metrics(model, y_test, y_pred, y_score, print_out=True, plot_out=T
         ax4.legend(loc='lower left', fontsize='small')
 
     return  df_metrics, df_roc_thresh, df_prc_thresh, cf_matrix
+
+'A partir daqui são funções para criar a métrica de avaliação'
+
+def met_poupanca_TP(real, prev):
+    if real == prev and real ==1:
+        return 1
+    else:
+        return 0
+
+def met_poupanca_TN(real, prev):
+    if real == prev and real == 0:
+        return 1
+    else:
+        return 0
+
+def met_poupanca_FP(real, prev):
+    if real == 0 and prev == 1:
+        return 1
+    else:
+        return 0
+
+def met_poupanca_FN(real, prev):
+    if real == 1 and prev == 0:
+        return 1
+    else:
+        return 0
+
+def metrics_create_df(df_test_in, y_test_in, y_pred_in):
+    'Criar o dataframe de avaliação dos resultados da predição'
+    cols= ['Date','Turbine_ID', 'TTF']
+    met_cre_df = df_test_in[cols].copy()
+    met_cre_df['y_test'] = y_test_in
+    met_cre_df['y_pred'] = y_pred_in
+    met_cre_df = met_cre_df.reset_index().drop(columns='index')
+    met_cre_df['TP'] = [met_poupanca_TP(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
+    met_cre_df['TN'] = [met_poupanca_TN(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
+    met_cre_df['FP'] = [met_poupanca_FP(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
+    met_cre_df['FN'] = [met_poupanca_FN(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
+
+    #'Dataframe com as falhas'
+    falhas = met_cre_df[met_cre_df.TTF.between(0.1 , 1.0)]
+
+    #'Lista de indices com as falhas'
+    falhas_index_list = []
+    dias_primeiro_TP = []
+    for i in range(len(falhas)):
+        falhas_index_list.append(falhas.index[i])
+
+    #'Criação do dicionário para amazenar as metricas da confusão'
+    cf_numbers = {'TP': 0,'TN': 0,'FP': 0,'FN': 0,}
+
+    # Para as ocorrências
+    ocorrencias = met_cre_df[met_cre_df['y_test'] == 1]
+
+    for ind in range(len(falhas_index_list)):
+        for key in cf_numbers:
+            if ind == 0:
+                cf_numbers[key] += ocorrencias.loc[:falhas_index_list[ind]][key].sum()
+            else:
+                cf_numbers[key] += ocorrencias.loc[falhas_index_list[ind-1]:falhas_index_list[ind]][key].sum()
+        if cf_numbers['TP'] >= 1:
+            cf_numbers['TP'] = 1
+            cf_numbers['TN'] = 0
+            cf_numbers['FP'] = 0
+            cf_numbers['FN'] = 0
+        elif cf_numbers['FN'] >= 1:
+            cf_numbers['TP'] = 0
+            cf_numbers['TN'] = 0
+            cf_numbers['FP'] = 0
+            cf_numbers['FN'] = 1
+        dias_primeiro_TP.append(ocorrencias.loc[ocorrencias[ocorrencias.TP == 1].index[0]].TTF.astype(int))
+
+    # Matrix de custo
+    cost_matrix_dict = {
+        'GEARBOX': {
+            'Replacement_Cost': 100000,
+            'Repair_Cost': 20000,
+            'Inspection_cost': 5000
+        },
+        'GENERATOR': {
+            'Replacement_Cost': 60000,
+            'Repair_Cost': 15000,
+            'Inspection_cost': 5000
+        },
+        'GENERATOR_BEARING': {
+            'Replacement_Cost': 30000,
+            'Repair_Cost': 12500,
+            'Inspection_cost': 4500
+        },
+        'TRANSFORMER': {
+            'Replacement_Cost': 50000,
+            'Repair_Cost': 3500,
+            'Inspection_cost': 1500
+        },
+        'HYDRAULIC_GROUP': {
+            'Replacement_Cost': 20000,
+            'Repair_Cost': 3000,
+            'Inspection_cost': 2000
+        }
+    }
+
+    #Formula das poupancas
+    Savings = 0
+    for i in range(len(dias_primeiro_TP)):
+    Savings = Savings -cost_matrix_dict['GENERATOR']['Inspection_cost'] * cf_numbers['FP'] - cost_matrix_dict['GENERATOR']['Replacement_Cost'] * cf_numbers['FN'] + cost_matrix_dict['GENERATOR']['Replacement_Cost'] - (cost_matrix_dict['GENERATOR']['Repair_Cost'] + (cost_matrix_dict['GENERATOR']['Replacement_Cost'] - cost_matrix_dict['GENERATOR']['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
+
+    return Savings
