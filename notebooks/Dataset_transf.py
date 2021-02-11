@@ -516,7 +516,7 @@ def met_poupanca_FN(real, prev):
     else:
         return 0
 
-def metrics_create_df(df_test_in, y_test_in, y_pred_in):
+def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
     'Criar o dataframe de avaliação dos resultados da predição'
     cols= ['Date','Turbine_ID', 'TTF']
     met_cre_df = df_test_in[cols].copy()
@@ -527,6 +527,9 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in):
     met_cre_df['TN'] = [met_poupanca_TN(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
     met_cre_df['FP'] = [met_poupanca_FP(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
     met_cre_df['FN'] = [met_poupanca_FN(met_cre_df.y_test[i], met_cre_df.y_pred[i]) for i in range(len(met_cre_df.y_pred))]
+
+    #rolling de 10 dias
+    met_cre_df['new_FP']= met_cre_df['FP'].rolling(days, min_periods=1).sum()
 
     #'Dataframe com as falhas'
     falhas = met_cre_df[met_cre_df.TTF.between(0.1 , 1.0)]
@@ -550,16 +553,20 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in):
             else:
                 cf_numbers[key] += ocorrencias.loc[falhas_index_list[ind-1]:falhas_index_list[ind]][key].sum()
         if cf_numbers['TP'] >= 1:
-            cf_numbers['TP'] = 1
-            cf_numbers['TN'] = 0
-            cf_numbers['FP'] = 0
             cf_numbers['FN'] = 0
         elif cf_numbers['FN'] >= 1:
             cf_numbers['TP'] = 0
-            cf_numbers['TN'] = 0
-            cf_numbers['FP'] = 0
             cf_numbers['FN'] = 1
-        dias_primeiro_TP.append(ocorrencias.loc[ocorrencias[ocorrencias.TP == 1].index[0]].TTF.astype(int))
+        dias_primeiro_TP.append(ocorrencias.loc[ocorrencias[ocorrencias.TP == 1].index[ind]].TTF.astype(int))
+
+    # Para as não ocorrências
+    ocorrencias = met_cre_df[met_cre_df['y_test'] == 0]
+
+    cf_numbers['TN'] = ocorrencias.TN.sum()
+
+    #Calcular false positives de mercado
+    new_fp_df = met_cre_df[met_cre_df['FP']==1]
+    cf_numbers['FP'] = len(new_fp_df[new_fp_df['new_FP']==1])
 
     # Matrix de custo
     cost_matrix_dict = {
@@ -592,7 +599,10 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in):
 
     #Formula das poupancas
     Savings = 0
+    fp_costs = cost_matrix_dict['GENERATOR']['Inspection_cost'] * cf_numbers['FP']
+    fn_costs = cost_matrix_dict['GENERATOR']['Replacement_Cost'] * cf_numbers['FN']
     for i in range(len(dias_primeiro_TP)):
-    Savings = Savings -cost_matrix_dict['GENERATOR']['Inspection_cost'] * cf_numbers['FP'] - cost_matrix_dict['GENERATOR']['Replacement_Cost'] * cf_numbers['FN'] + cost_matrix_dict['GENERATOR']['Replacement_Cost'] - (cost_matrix_dict['GENERATOR']['Repair_Cost'] + (cost_matrix_dict['GENERATOR']['Replacement_Cost'] - cost_matrix_dict['GENERATOR']['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
+        tp_savings = cost_matrix_dict['GENERATOR']['Replacement_Cost'] - (cost_matrix_dict['GENERATOR']['Repair_Cost'] + (cost_matrix_dict['GENERATOR']['Replacement_Cost'] - cost_matrix_dict['GENERATOR']['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
+    Savings = tp_savings - fp_costs - fn_costs
 
-    return Savings
+    return Savings , cf_numbers, met_cre_df
