@@ -16,6 +16,9 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import roc_auc_score, accuracy_score, log_loss, roc_curve, precision_score, recall_score,confusion_matrix,f1_score,fbeta_score, make_scorer
+
+
 
 def get_data():
     data = {}
@@ -280,46 +283,18 @@ def group_por_frequency(df, period='Dia', strategy='mean'):
 
 #Standard scaler per Turbine
 def scale(df_train, df_test, scaler='StandardScaler'):
-
-    X_train = df_train
-    X_test = df_test
-
-    X_train1 = X_train.loc[X_train['Turbine_ID']=='T01']
-    X_test1 = X_test.loc[X_test['Turbine_ID']=='T01']
-
-    X_train1 = X_train1.drop(columns='Turbine_ID')
-    X_test1 = X_test1.drop(columns='Turbine_ID')
-
-    if scaler == 'MinMaxScaler':
-        sc = MinMaxScaler()
-        X_train1 = sc.fit_transform(X_train1)
-        X_test1 = sc.transform(X_test1)
-    else:
-        sc = StandardScaler()
-        X_train1 = sc.fit_transform(X_train1)
-        X_test1 = sc.transform(X_test1)
-
-    turbines = ['T06', 'T07', 'T09', 'T11']
-    for turbine in turbines:
-        X_train_ = X_train.loc[X_train['Turbine_ID']==turbine]
-        X_test_ = X_test.loc[X_test['Turbine_ID']==turbine]
-
-        X_train_ = X_train_.drop(columns='Turbine_ID')
-        X_test_ = X_test_.drop(columns='Turbine_ID')
-
+    for m_id in pd.unique(df_train.Turbine_ID):
+        X_train = df_train.drop(columns=['Turbine_ID'])
+        X_test = df_test.drop(columns=['Turbine_ID'])
         if scaler == 'MinMaxScaler':
             sc = MinMaxScaler()
-            X_train_ = sc.fit_transform(X_train_)
-            X_test_ = sc.transform(X_test_)
+            X_train_scale = sc.fit_transform(df)
+            X_test_scale = sc.transform(X_test)
         else:
             sc = StandardScaler()
-            X_train_ = sc.fit_transform(X_train_)
-            X_test_ = sc.transform(X_test_)
-
-        X_train1 = np.concatenate((X_train1, X_train_))
-        X_test1 = np.concatenate((X_test1, X_test_))
-
-    return X_train1, X_test1
+            X_train_scale = sc.fit_transform(X_train)
+            X_test_scale = sc.transform(X_test)
+    return X_train_scale, X_test_scale
 
 def bin_classify(model, clf, X_train, X_test, y_train, y_test, params=None, score=None, ):
     """Perform Grid Search hyper parameter tuning on a classifier.
@@ -351,144 +326,44 @@ def bin_classify(model, clf, X_train, X_test, y_train, y_test, params=None, scor
 
     return grid_search.best_estimator_, df_predictions
 
-def bin_class_metrics(model, y_test, y_pred, y_score, print_out=True, plot_out=True):
-    """Calculate main binary classifcation metrics, plot AUC ROC and Precision-Recall curves.
-    Args:
-        model (str): The model name identifier
-        y_test (series): Contains the test label values
-        y_pred (series): Contains the predicted values
-        y_score (series): Contains the predicted scores
-        print_out (bool): Print the classification metrics and thresholds values
-        plot_out (bool): Plot AUC ROC, Precision-Recall, and Threshold curves
-    Returns:
-        dataframe: The combined metrics in single dataframe
-        dataframe: ROC thresholds
-        dataframe: Precision-Recall thresholds
-        Plot: AUC ROC
-        plot: Precision-Recall
-        plot: Precision-Recall threshold; also show the number of engines predicted for maintenace per period (queue).
-        plot: TPR-FPR threshold
-    """
+def metrics(y_test, y_test_pred, y_test_prob):
+    y_test = pd.DataFrame(data=y_test, columns=['Pred'])
+    cm2 = confusion_matrix(y_test.values,y_test_pred)
 
-    binclass_metrics = {
-                        'Accuracy' : metrics.accuracy_score(y_test, y_pred),
-                        'Precision' : metrics.precision_score(y_test, y_pred),
-                        'Recall' : metrics.recall_score(y_test, y_pred),
-                        'F1 Score' : metrics.f1_score(y_test, y_pred),
-                        'ROC AUC' : metrics.roc_auc_score(y_test, y_score)
-                       }
+    total1=sum(sum(cm2))
 
-    df_metrics = pd.DataFrame.from_dict(binclass_metrics, orient='index')
-    df_metrics.columns = [model]
+    metrics_dict = {
+    'AUC_Test': roc_auc_score(y_test, y_test_prob) if len(y_test['Pred'].value_counts())>1 else np.nan,
+    'Accuracy':     (cm2[0,0]+cm2[1,1])/total1 if len(y_test['Pred'].value_counts())>1 else np.nan,
+    'Recall': cm2[1,1]/(cm2[1,0]+cm2[1,1]) if len(y_test['Pred'].value_counts())>1 else np.nan,
+    'Specificity':  cm2[0,0]/(cm2[0,0]+cm2[0,1]) if len(y_test['Pred'].value_counts())>1 else np.nan,
+    'Precision':    cm2[1,1]/(cm2[0,1]+cm2[1,1]) if len(y_test['Pred'].value_counts())>1 else np.nan,
+    'F1 Score':    f1_score(y_test,y_test_pred) if len(y_test['Pred'].value_counts())>1 else np.nan}
+
+    return metrics_dict
+
+def conf_matrix( y_test, y_test_pred):
+
+    return pd.crosstab(y_test, y_test_pred, rownames=['Actual Class'], colnames=['Predicted Class'])
 
 
-    fpr, tpr, thresh_roc = metrics.roc_curve(y_test, y_score)
+def roc_curve_plot(y_test, y_test_prob):
 
-    roc_auc = metrics.auc(fpr, tpr)
-
-    engines_roc = []
-    for thr in thresh_roc:
-        engines_roc.append((y_score >= thr).mean())
-
-    engines_roc = np.array(engines_roc)
-
-    roc_thresh = {
-                    'Threshold' : thresh_roc,
-                    'TPR' : tpr,
-                    'FPR' : fpr,
-                    'Que' : engines_roc
-                 }
-
-    df_roc_thresh = pd.DataFrame.from_dict(roc_thresh)
-
-    #calculate other classification metrics: TP, FP, TN, FN, TNR, FNR
-    #from ground truth file, positive class = 25 => TP + FN = 25
-    #from ground truth file, negative class = 75 => TN + FP = 75
-
-    df_roc_thresh['TP'] = (25*df_roc_thresh.TPR).astype(int)
-    df_roc_thresh['FP'] = (25 - (25*df_roc_thresh.TPR)).astype(int)
-    df_roc_thresh['TN'] = (75*(1 - df_roc_thresh.FPR)).astype(int)
-    df_roc_thresh['FN'] = (75 - (75*(1 - df_roc_thresh.FPR))).astype(int)
-
-    df_roc_thresh['TNR'] = df_roc_thresh['TN']/(df_roc_thresh['TN'] + df_roc_thresh['FN'])
-    df_roc_thresh['FNR'] = df_roc_thresh['TN']/(df_roc_thresh['TN'] + df_roc_thresh['FP'])
-
-    df_roc_thresh['Model'] = model
+    sns.set(style='white')
+    fpr, tpr, threshold = roc_curve(y_test, y_test_prob)
+    plt.plot(fpr, tpr, label='model')
+    plt.legend(loc='center right')
+    plt.plot([0,1],[0,1],'k')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.show()
 
 
 
-    precision, recall, thresh_prc = metrics.precision_recall_curve(y_test, y_score)
 
-    thresh_prc = np.append(thresh_prc,1)
 
-    engines_prc = []
-    for thr in thresh_prc:
-        engines_prc.append((y_score >= thr).mean())
 
-    engines_prc = np.array(engines_prc)
-
-    prc_thresh = {
-                    'Threshold' : thresh_prc,
-                    'Precision' : precision,
-                    'Recall' : recall,
-                    'Que' : engines_prc
-                 }
-
-    df_prc_thresh = pd.DataFrame.from_dict(prc_thresh)
-    cf_matrix = metrics.confusion_matrix(y_test, y_pred)
-
-    # if print_out:
-    #     print('-----------------------------------------------------------')
-    #     print(model, '\n')
-    #     print('Confusion Matrix:')
-    #     print(cf_matrix)
-    #     print('\nClassification Report:')
-    #     print(metrics.classification_report(y_test, y_pred))
-    #     print('\nMetrics:')
-    #     print(df_metrics)
-
-    #     print('\nROC Thresholds:\n')
-    #     print(df_roc_thresh[['Threshold', 'TP', 'FP', 'TN', 'FN', 'TPR', 'FPR', 'TNR','FNR', 'Que']])
-
-    #     print('\nPrecision-Recall Thresholds:\n')
-    #     print(df_prc_thresh[['Threshold', 'Precision', 'Recall', 'Que']])
-
-    if plot_out:
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, sharex=False, sharey=False )
-        fig.set_size_inches(10,10)
-
-        ax1.plot(fpr, tpr, color='darkorange', lw=2, label='AUC = %0.2f'% roc_auc)
-        ax1.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-        ax1.set_xlim([-0.05, 1.0])
-        ax1.set_ylim([0.0, 1.05])
-        ax1.set_xlabel('False Positive Rate')
-        ax1.set_ylabel('True Positive Rate')
-        ax1.legend(loc="lower right", fontsize='small')
-
-        ax2.plot(recall, precision, color='blue', lw=2, label='Precision-Recall curve')
-        ax2.set_xlim([0.0, 1.0])
-        ax2.set_ylim([0.0, 1.05])
-        ax2.set_xlabel('Recall')
-        ax2.set_ylabel('Precision')
-        ax2.legend(loc="lower left", fontsize='small')
-
-        ax3.plot(thresh_roc, fpr, color='red', lw=2, label='FPR')
-        ax3.plot(thresh_roc, tpr, color='green',label='TPR')
-        ax3.plot(thresh_roc, engines_roc, color='blue',label='Engines')
-        ax3.set_ylim([0.0, 1.05])
-        ax3.set_xlabel('Threshold')
-        ax3.set_ylabel('%')
-        ax3.legend(loc='upper right', fontsize='small')
-
-        ax4.plot(thresh_prc, precision, color='red', lw=2, label='Precision')
-        ax4.plot(thresh_prc, recall, color='green',label='Recall')
-        ax4.plot(thresh_prc, engines_prc, color='blue',label='Engines')
-        ax4.set_ylim([0.0, 1.05])
-        ax4.set_xlabel('Threshold')
-        ax4.set_ylabel('%')
-        ax4.legend(loc='lower left', fontsize='small')
-
-    return  df_metrics, df_roc_thresh, df_prc_thresh, cf_matrix
 
 'A partir daqui são funções para criar a métrica de avaliação'
 
@@ -516,10 +391,12 @@ def met_poupanca_FN(real, prev):
     else:
         return 0
 
-def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
+def metrics_create_df(df_test_in, y_test_in, y_pred_in, component, days=10, ):
     'Criar o dataframe de avaliação dos resultados da predição'
+    "df_gearbox, df_generator, df_generator, df_transformer, df_hydraulic"
     cols= ['Date','Turbine_ID', 'TTF']
     met_cre_df = df_test_in[cols].copy()
+    met_cre_df['TTF'] = np.ceil(met_cre_df['TTF'])
     met_cre_df['y_test'] = y_test_in
     met_cre_df['y_pred'] = y_pred_in
     met_cre_df = met_cre_df.reset_index().drop(columns='index')
@@ -532,20 +409,18 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
     met_cre_df['new_FP']= met_cre_df['FP'].rolling(days, min_periods=1).sum()
 
     #'Dataframe com as falhas'
-    falhas = met_cre_df[met_cre_df.TTF.between(0.1 , 1.0)]
+    falhas = met_cre_df[met_cre_df.TTF==1]
 
     #'Lista de indices com as falhas'
     falhas_index_list = []
     dias_primeiro_TP = []
     for i in range(len(falhas)):
         falhas_index_list.append(falhas.index[i])
-
     #'Criação do dicionário para amazenar as metricas da confusão'
     cf_numbers = {'TP': 0,'TN': 0,'FP': 0,'FN': 0,}
 
     # Para as ocorrências
     ocorrencias = met_cre_df[met_cre_df['y_test'] == 1]
-
     for ind in range(len(falhas_index_list)):
         for key in cf_numbers:
             if ind == 0:
@@ -553,11 +428,13 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
             else:
                 cf_numbers[key] += ocorrencias.loc[falhas_index_list[ind-1]:falhas_index_list[ind]][key].sum()
         if cf_numbers['TP'] >= 1:
+            cf_numbers['TP'] = 1
             cf_numbers['FN'] = 0
         elif cf_numbers['FN'] >= 1:
             cf_numbers['TP'] = 0
             cf_numbers['FN'] = 1
-        dias_primeiro_TP.append(ocorrencias.loc[ocorrencias[ocorrencias.TP == 1].index[ind]].TTF.astype(int))
+        if len(ocorrencias[ocorrencias.TP == 1]) != 0:
+            dias_primeiro_TP.append(ocorrencias.loc[ocorrencias[ocorrencias.TP == 1].index[ind]].TTF.astype(int))
 
     # Para as não ocorrências
     ocorrencias = met_cre_df[met_cre_df['y_test'] == 0]
@@ -570,27 +447,27 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
 
     # Matrix de custo
     cost_matrix_dict = {
-        'GEARBOX': {
+        'df_gearbox': {
             'Replacement_Cost': 100000,
             'Repair_Cost': 20000,
             'Inspection_cost': 5000
         },
-        'GENERATOR': {
+        'df_generator': {
             'Replacement_Cost': 60000,
             'Repair_Cost': 15000,
             'Inspection_cost': 5000
         },
-        'GENERATOR_BEARING': {
+        'df_gen_bear': {
             'Replacement_Cost': 30000,
             'Repair_Cost': 12500,
             'Inspection_cost': 4500
         },
-        'TRANSFORMER': {
+        'df_transformer': {
             'Replacement_Cost': 50000,
             'Repair_Cost': 3500,
             'Inspection_cost': 1500
         },
-        'HYDRAULIC_GROUP': {
+        'df_hydraulic': {
             'Replacement_Cost': 20000,
             'Repair_Cost': 3000,
             'Inspection_cost': 2000
@@ -599,10 +476,14 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, days=10):
 
     #Formula das poupancas
     Savings = 0
-    fp_costs = cost_matrix_dict['GENERATOR']['Inspection_cost'] * cf_numbers['FP']
-    fn_costs = cost_matrix_dict['GENERATOR']['Replacement_Cost'] * cf_numbers['FN']
-    for i in range(len(dias_primeiro_TP)):
-        tp_savings = cost_matrix_dict['GENERATOR']['Replacement_Cost'] - (cost_matrix_dict['GENERATOR']['Repair_Cost'] + (cost_matrix_dict['GENERATOR']['Replacement_Cost'] - cost_matrix_dict['GENERATOR']['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
+    fp_costs = cost_matrix_dict[component]['Inspection_cost'] * cf_numbers['FP']
+    fn_costs = cost_matrix_dict[component]['Replacement_Cost'] * cf_numbers['FN']
+
+    if len(ocorrencias[ocorrencias.TP == 1]) != 0:
+        for i in range(len(dias_primeiro_TP)):
+            tp_savings = cost_matrix_dict[component]['Replacement_Cost'] - (cost_matrix_dict[component]['Repair_Cost'] + (cost_matrix_dict[component]['Replacement_Cost'] - cost_matrix_dict[component]['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
+    else:
+        tp_savings = 0
     Savings = tp_savings - fp_costs - fn_costs
 
     return Savings , cf_numbers, met_cre_df

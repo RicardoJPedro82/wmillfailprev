@@ -1,0 +1,95 @@
+try_0,"{'Componente': 'df_generator', 'Nome_modelo': 'Logistic Regression', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Logistic Regression', 'Metrics': {'AUC_Test': 0.9190094802222949, 'Accuracy': 0.6172043010752688, 'Recall': 1.0, 'Specificity': 0.5926773455377574, 'Precision': 0.13592233009708737, 'F1 Score': 0.23931623931623933}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                259  178
+1                  0   28, 'Savings': -35000, 'cf_bussines_numbers': {'TP': 1, 'TN': 259, 'FP': 7, 'FN': 0}}"
+try_1,"{'Componente': 'df_hydraulic', 'Nome_modelo': 'Logistic Regression', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Logistic Regression', 'Metrics': {'AUC_Test': 0.4112912304401666, 'Accuracy': 0.8193548387096774, 'Recall': 0.07142857142857142, 'Specificity': 0.8936170212765957, 'Precision': 0.0625, 'F1 Score': 0.06666666666666667}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                378  45
+1                 39   3, 'Savings': -6000, 'cf_bussines_numbers': {'TP': 1, 'TN': 378, 'FP': 3, 'FN': 0}}"
+try_2,"{'Componente': 'df_gen_bear', 'Nome_modelo': 'Logistic Regression', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Logistic Regression', 'Metrics': {'AUC_Test': 0.5533671134357634, 'Accuracy': 0.8903225806451613, 'Recall': 0.0, 'Specificity': 0.9473684210526315, 'Precision': 0.0, 'F1 Score': 0.0}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                414  23
+1                 28   0, 'Savings': -39000, 'cf_bussines_numbers': {'TP': 0, 'TN': 414, 'FP': 2, 'FN': 1}}"
+try_3,"{'Componente': 'df_transformer', 'Nome_modelo': 'Logistic Regression', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Logistic Regression', 'Metrics': {'AUC_Test': 0.4169663288656424, 'Accuracy': 0.5311827956989247, 'Recall': 0.03571428571428571, 'Specificity': 0.562929061784897, 'Precision': 0.005208333333333333, 'F1 Score': 0.00909090909090909}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                246  191
+1                 27    1, 'Savings': -4500, 'cf_bussines_numbers': {'TP': 1, 'TN': 246, 'FP': 3, 'FN': 0}}"
+try_4,"{'Componente': 'df_gearbox', 'Nome_modelo': 'Logistic Regression', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Logistic Regression', 'Metrics': {'AUC_Test': nan, 'Accuracy': nan, 'Recall': nan, 'Specificity': nan, 'Precision': nan, 'F1 Score': nan}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                439  26, 'Savings': -25000, 'cf_bussines_numbers': {'TP': 0, 'TN': 439, 'FP': 5, 'FN': 0}}"
+try_5,"{'Componente': 'df_generator', 'Nome_modelo': 'Random_Forest_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Random_Forest_Classifier', 'Metrics': {'AUC_Test': 0.8804756456358287, 'Accuracy': 0.5870967741935483, 'Recall': 1.0, 'Specificity': 0.5606407322654462, 'Precision': 0.12727272727272726, 'F1 Score': 0.22580645161290322}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                245  192
+1                  0   28, 'Savings': -30000, 'cf_bussines_numbers': {'TP': 1, 'TN': 245, 'FP': 6, 'FN': 0}}"
+try_6,"{'Componente': 'df_hydraulic', 'Nome_modelo': 'Random_Forest_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Random_Forest_Classifier', 'Metrics': {'AUC_Test': 0.5004502983226388, 'Accuracy': 0.9096774193548387, 'Recall': 0.0, 'Specificity': 1.0, 'Precision': nan, 'F1 Score': 0.0}, 'cf_matriX_log_reg': Predicted Class    0
+Actual Class        
+0                423
+1                 42, 'Savings': -20000, 'cf_bussines_numbers': {'TP': 0, 'TN': 423, 'FP': 0, 'FN': 1}}"
+try_7,"{'Componente': 'df_gen_bear', 'Nome_modelo': 'Random_Forest_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Random_Forest_Classifier', 'Metrics': {'AUC_Test': 0.4754004576659039, 'Accuracy': 0.9376344086021505, 'Recall': 0.0, 'Specificity': 0.9977116704805492, 'Precision': 0.0, 'F1 Score': 0.0}, 'cf_matriX_log_reg': Predicted Class    0  1
+Actual Class           
+0                436  1
+1                 28  0, 'Savings': -34500, 'cf_bussines_numbers': {'TP': 0, 'TN': 436, 'FP': 1, 'FN': 1}}"
+try_8,"{'Componente': 'df_transformer', 'Nome_modelo': 'Random_Forest_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Random_Forest_Classifier', 'Metrics': {'AUC_Test': 0.6698267407649559, 'Accuracy': 0.9247311827956989, 'Recall': 0.03571428571428571, 'Specificity': 0.9816933638443935, 'Precision': 0.1111111111111111, 'F1 Score': 0.05405405405405406}, 'cf_matriX_log_reg': Predicted Class    0  1
+Actual Class           
+0                429  8
+1                 27  1, 'Savings': -4500, 'cf_bussines_numbers': {'TP': 1, 'TN': 429, 'FP': 3, 'FN': 0}}"
+try_9,"{'Componente': 'df_gearbox', 'Nome_modelo': 'Random_Forest_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Random_Forest_Classifier', 'Metrics': {'AUC_Test': nan, 'Accuracy': nan, 'Recall': nan, 'Specificity': nan, 'Precision': nan, 'F1 Score': nan}, 'cf_matriX_log_reg': Predicted Class    0
+Actual Class        
+0                465, 'Savings': 0, 'cf_bussines_numbers': {'TP': 0, 'TN': 465, 'FP': 0, 'FN': 0}}"
+try_10,"{'Componente': 'df_generator', 'Nome_modelo': 'Gradient_Boosting_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Gradient_Boosting_Classifier', 'Metrics': {'AUC_Test': 0.8545276234063419, 'Accuracy': 0.5505376344086022, 'Recall': 1.0, 'Specificity': 0.5217391304347826, 'Precision': 0.11814345991561181, 'F1 Score': 0.21132075471698114}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                228  209
+1                  0   28, 'Savings': -35000, 'cf_bussines_numbers': {'TP': 1, 'TN': 228, 'FP': 7, 'FN': 0}}"
+try_11,"{'Componente': 'df_hydraulic', 'Nome_modelo': 'Gradient_Boosting_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Gradient_Boosting_Classifier', 'Metrics': {'AUC_Test': 0.4634976922210965, 'Accuracy': 0.7591397849462366, 'Recall': 0.047619047619047616, 'Specificity': 0.8297872340425532, 'Precision': 0.02702702702702703, 'F1 Score': 0.034482758620689655}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                351  72
+1                 40   2, 'Savings': -24000, 'cf_bussines_numbers': {'TP': 1, 'TN': 351, 'FP': 12, 'FN': 0}}"
+try_12,"{'Componente': 'df_gen_bear', 'Nome_modelo': 'Gradient_Boosting_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Gradient_Boosting_Classifier', 'Metrics': {'AUC_Test': 0.6391794704151683, 'Accuracy': 0.8387096774193549, 'Recall': 0.03571428571428571, 'Specificity': 0.8901601830663616, 'Precision': 0.02040816326530612, 'F1 Score': 0.025974025974025972}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                389  48
+1                 27   1, 'Savings': -31500, 'cf_bussines_numbers': {'TP': 1, 'TN': 389, 'FP': 7, 'FN': 0}}"
+try_13,"{'Componente': 'df_transformer', 'Nome_modelo': 'Gradient_Boosting_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Gradient_Boosting_Classifier', 'Metrics': {'AUC_Test': 0.4886400784570121, 'Accuracy': 0.6881720430107527, 'Recall': 0.35714285714285715, 'Specificity': 0.7093821510297483, 'Precision': 0.072992700729927, 'F1 Score': 0.12121212121212122}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                310  127
+1                 18   10, 'Savings': -10500, 'cf_bussines_numbers': {'TP': 1, 'TN': 310, 'FP': 7, 'FN': 0}}"
+try_14,"{'Componente': 'df_gearbox', 'Nome_modelo': 'Gradient_Boosting_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'Gradient_Boosting_Classifier', 'Metrics': {'AUC_Test': nan, 'Accuracy': nan, 'Recall': nan, 'Specificity': nan, 'Precision': nan, 'F1 Score': nan}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                454  11, 'Savings': -30000, 'cf_bussines_numbers': {'TP': 0, 'TN': 454, 'FP': 6, 'FN': 0}}"
+try_15,"{'Componente': 'df_generator', 'Nome_modelo': 'KNN_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'KNN_Classifier', 'Metrics': {'AUC_Test': 0.8416966328865643, 'Accuracy': 0.7526881720430108, 'Recall': 0.8214285714285714, 'Specificity': 0.7482837528604119, 'Precision': 0.17293233082706766, 'F1 Score': 0.28571428571428575}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                327  110
+1                  5   23, 'Savings': -45000, 'cf_bussines_numbers': {'TP': 1, 'TN': 327, 'FP': 9, 'FN': 0}}"
+try_16,"{'Componente': 'df_hydraulic', 'Nome_modelo': 'KNN_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'KNN_Classifier', 'Metrics': {'AUC_Test': 0.5085838117753011, 'Accuracy': 0.8924731182795699, 'Recall': 0.0, 'Specificity': 0.9810874704491725, 'Precision': 0.0, 'F1 Score': 0.0}, 'cf_matriX_log_reg': Predicted Class    0  1
+Actual Class           
+0                415  8
+1                 42  0, 'Savings': -26000, 'cf_bussines_numbers': {'TP': 0, 'TN': 415, 'FP': 3, 'FN': 1}}"
+try_17,"{'Componente': 'df_gen_bear', 'Nome_modelo': 'KNN_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'KNN_Classifier', 'Metrics': {'AUC_Test': 0.560518143184047, 'Accuracy': 0.9032258064516129, 'Recall': 0.10714285714285714, 'Specificity': 0.954233409610984, 'Precision': 0.13043478260869565, 'F1 Score': 0.11764705882352941}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                417  20
+1                 25   3, 'Savings': -36000, 'cf_bussines_numbers': {'TP': 1, 'TN': 417, 'FP': 8, 'FN': 0}}"
+try_18,"{'Componente': 'df_transformer', 'Nome_modelo': 'KNN_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'KNN_Classifier', 'Metrics': {'AUC_Test': 0.49403399803857473, 'Accuracy': 0.8279569892473119, 'Recall': 0.32142857142857145, 'Specificity': 0.8604118993135011, 'Precision': 0.12857142857142856, 'F1 Score': 0.18367346938775508}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                376  61
+1                 19   9, 'Savings': -13500, 'cf_bussines_numbers': {'TP': 1, 'TN': 376, 'FP': 9, 'FN': 0}}"
+try_19,"{'Componente': 'df_gearbox', 'Nome_modelo': 'KNN_Classifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'KNN_Classifier', 'Metrics': {'AUC_Test': nan, 'Accuracy': nan, 'Recall': nan, 'Specificity': nan, 'Precision': nan, 'F1 Score': nan}, 'cf_matriX_log_reg': Predicted Class    0  1
+Actual Class           
+0                461  4, 'Savings': -15000, 'cf_bussines_numbers': {'TP': 0, 'TN': 461, 'FP': 3, 'FN': 0}}"
+try_20,"{'Componente': 'df_generator', 'Nome_modelo': 'AdaBoostClassifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'AdaBoostClassifier', 'Metrics': {'AUC_Test': 0.5118502778685845, 'Accuracy': 0.7118279569892473, 'Recall': 0.5, 'Specificity': 0.7254004576659039, 'Precision': 0.1044776119402985, 'F1 Score': 0.1728395061728395}, 'cf_matriX_log_reg': Predicted Class    0    1
+Actual Class             
+0                317  120
+1                 14   14, 'Savings': -40000, 'cf_bussines_numbers': {'TP': 1, 'TN': 317, 'FP': 8, 'FN': 0}}"
+try_21,"{'Componente': 'df_hydraulic', 'Nome_modelo': 'AdaBoostClassifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'AdaBoostClassifier', 'Metrics': {'AUC_Test': 0.46099290780141844, 'Accuracy': 0.7311827956989247, 'Recall': 0.21428571428571427, 'Specificity': 0.7825059101654847, 'Precision': 0.0891089108910891, 'F1 Score': 0.12587412587412586}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                331  92
+1                 33   9, 'Savings': -14000, 'cf_bussines_numbers': {'TP': 1, 'TN': 331, 'FP': 7, 'FN': 0}}"
+try_22,"{'Componente': 'df_gen_bear', 'Nome_modelo': 'AdaBoostClassifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'AdaBoostClassifier', 'Metrics': {'AUC_Test': 0.5357142857142858, 'Accuracy': 0.8064516129032258, 'Recall': 0.10714285714285714, 'Specificity': 0.851258581235698, 'Precision': 0.04411764705882353, 'F1 Score': 0.0625}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                372  65
+1                 25   3, 'Savings': -45000, 'cf_bussines_numbers': {'TP': 1, 'TN': 372, 'FP': 10, 'FN': 0}}"
+try_23,"{'Componente': 'df_transformer', 'Nome_modelo': 'AdaBoostClassifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'AdaBoostClassifier', 'Metrics': {'AUC_Test': 0.5254985289310232, 'Accuracy': 0.7720430107526882, 'Recall': 0.21428571428571427, 'Specificity': 0.8077803203661327, 'Precision': 0.06666666666666667, 'F1 Score': 0.10169491525423728}, 'cf_matriX_log_reg': Predicted Class    0   1
+Actual Class            
+0                353  84
+1                 22   6, 'Savings': -9000, 'cf_bussines_numbers': {'TP': 1, 'TN': 353, 'FP': 6, 'FN': 0}}"
+try_24,"{'Componente': 'df_gearbox', 'Nome_modelo': 'AdaBoostClassifier', 'dias_var_alvo': ['30_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'model': 'AdaBoostClassifier', 'Metrics': {'AUC_Test': nan, 'Accuracy': nan, 'Recall': nan, 'Specificity': nan, 'Precision': nan, 'F1 Score': nan}, 'cf_matriX_log_reg': Predicted Class    0
+Actual Class        
+0                465, 'Savings': 0, 'cf_bussines_numbers': {'TP': 0, 'TN': 465, 'FP': 0, 'FN': 0}}"
