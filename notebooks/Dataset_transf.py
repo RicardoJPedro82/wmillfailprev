@@ -359,7 +359,13 @@ def roc_curve_plot(y_test, y_test_prob):
     plt.title('ROC Curve')
     plt.show()
 
+def pred_vs_real(y_test, y_pred):
 
+    sns.set(style='white')
+    plt.plot(y_test)
+    plt.plot(y_pred)
+    plt.xlabel('real versus previsao')
+    plt.show
 
 
 
@@ -391,9 +397,9 @@ def met_poupanca_FN(real, prev):
     else:
         return 0
 
-def metrics_create_df(df_test_in, y_test_in, y_pred_in, component, days=10, ):
+def metrics_create_df(df_test_in, y_test_in, y_pred_in, component, days=10):
     'Criar o dataframe de avaliação dos resultados da predição'
-    "df_gearbox, df_generator, df_generator, df_transformer, df_hydraulic"
+    "df_gearbox, df_generator, df_gen_bear, df_transformer, df_hydraulic"
     cols= ['Date','Turbine_ID', 'TTF']
     met_cre_df = df_test_in[cols].copy()
     met_cre_df['TTF'] = np.ceil(met_cre_df['TTF'])
@@ -479,11 +485,11 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, component, days=10, ):
     fp_costs = cost_matrix_dict[component]['Inspection_cost'] * cf_numbers['FP']
     fn_costs = cost_matrix_dict[component]['Replacement_Cost'] * cf_numbers['FN']
 
-    if len(ocorrencias[ocorrencias.TP == 1]) != 0:
+    if len(met_cre_df[met_cre_df.TP == 1]) != 0:
         for i in range(len(dias_primeiro_TP)):
             tp_savings = cost_matrix_dict[component]['Replacement_Cost'] - (cost_matrix_dict[component]['Repair_Cost'] + (cost_matrix_dict[component]['Replacement_Cost'] - cost_matrix_dict[component]['Repair_Cost']) *(1 - (dias_primeiro_TP[i] / 60)))
     else:
         tp_savings = 0
     Savings = tp_savings - fp_costs - fn_costs
 
-    return Savings , cf_numbers, met_cre_df
+    return Savings , cf_numbers, met_cre_df, dias_primeiro_TP
