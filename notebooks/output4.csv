@@ -1,0 +1,7 @@
+try_1,"{'Component': 'HYDRAULIC_GROUP', 'dias_var_alvo': ['40_days'], 'feature_selection': 'Guilherme', 'Agrup_por': 'Dia', 'add_features': 'smooth only', 'per_test': '3meses', 'metrics_LogReg':            Logistic Regression
+Accuracy              0.875269
+Precision             0.045455
+Recall                0.026316
+F1 Score              0.033333
+ROC AUC               0.583015, 'cf_matriX_log_reg': array([[406,  21],
+       [ 37,   1]], dtype=int64)}"
