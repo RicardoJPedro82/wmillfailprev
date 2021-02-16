@@ -137,7 +137,7 @@ def logs_dummies(df):
     return df
 
 def sig_fail_merge_dfs(sig_df, fail_df, component):
-    'fazer o merge com o failures e desevolver o já dumminized'
+    'fazer o merge com o failures e desevolver o já dummyfied'
     #filtrar o componente
     fail_df = fail_df[fail_df['Component'] == component]
     # aplicar o dummies
