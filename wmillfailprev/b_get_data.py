@@ -198,7 +198,29 @@ def add_features(df_in, rolling_win_size=15):
     df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
 
+def prepare_test_df(df, meses=3):
+    if 'Timestamp' in df.keys():
+        last_date = df['Timestamp'].iloc[-1]
+        split = last_date - pd.DateOffset(months=meses)
+        df_test = df[df['Timestamp'] >= split]
+    else:
+        last_date = df['Date'].iloc[-1]
+        split = last_date - pd.DateOffset(months=meses)
+        df_test = df[df['Date'] >= split]
+    return df_test
 
+def prepare_train_df(df, meses=3):
+    if 'Timestamp' in df.keys():
+        last_date = df['Timestamp'].iloc[-1]
+        split = last_date - pd.DateOffset(months=meses)
+        df_train = df[df['Timestamp'] < split]
+    else:
+        last_date = df['Date'].iloc[-1]
+        split = last_date - pd.DateOffset(months=meses)
+        df_train = df[df['Date'] < split]
+
+    # df_test = df[df['Timestamp'] >= split]
+    return df_train
 
 if __name__ == "__main__":
     print('001 - Obtendo os dados')
