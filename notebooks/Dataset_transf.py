@@ -265,6 +265,51 @@ def add_features(df_in, rolling_win_size=15):
     df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
 
+def add_features_test(df_in, rolling_win_size=15):
+    """Add rolling average and rolling standard deviation for sensors readings using fixed rolling window size.
+    Args:
+            df_in (dataframe)     : The input dataframe to be proccessed (training or test)
+            rolling_win_size (int): The window size, number of cycles for applying the rolling function
+    Returns:
+            dataframe: contains the input dataframe with additional rolling mean and std for each sensor
+    """
+
+    sensor_cols = []
+    for i in df_in.columns[2:]:
+        sensor_cols.append(i)
+
+    sensor_av_cols = [nm+'_av' for nm in sensor_cols]
+    sensor_sd_cols = [nm+'_sd' for nm in sensor_cols]
+
+    df_out = pd.DataFrame()
+
+    ws = rolling_win_size
+
+    #calculate rolling stats for each engine id
+
+    for m_id in pd.unique(df_in.Turbine_ID):
+
+        # get a subset for each engine sensors
+        df_engine = df_in[df_in['Turbine_ID'] == m_id]
+        df_sub = df_engine[sensor_cols]
+
+        # get rolling mean for the subset
+        av = df_sub.rolling(ws, min_periods=1).mean()
+        av.columns = sensor_av_cols
+
+        # get the rolling standard deviation for the subset
+        sd = df_sub.rolling(ws, min_periods=1).std().fillna(0)
+        sd.columns = sensor_sd_cols
+
+        # combine the two new subset dataframes columns to the engine subset
+        new_ftrs = pd.concat([df_engine,av,sd], axis=1)
+
+        # add the new features rows to the output dataframe
+        df_out = pd.concat([df_out,new_ftrs])
+    df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
+    return df_out
+
+
 def group_por_frequency(df, period='Dia', strategy='mean'):
     'Função para agregar o data-frame pela medida de tempo pretendida, periodo _Dia_ ou _Hora_'
     if period == 'Dia':
