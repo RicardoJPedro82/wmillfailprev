@@ -61,20 +61,22 @@ if __name__ == "__main__":
     for key in comp_prep_df_dict:
         comp_prep_df_dict[key] = group_por_frequency(comp_prep_df_dict[key], period='Dia')
 
-    print('011 - Adicionar medidas de alisamento')
-    for key in comp_prep_df_dict:
-        comp_prep_df_dict[key] = add_features(comp_prep_df_dict[key], rolling_win_size=10)
-
     print('012 - Separar entre treino e teste')
     df_train_comp_dict = {}
     df_test_comp_dict = {}
     for key in comp_prep_df_dict:
         df_train_comp_dict[key] = prepare_train_df(comp_prep_df_dict[key], meses = 3)
+        df_test_comp_dict[key] = prepare_test_df(comp_prep_df_dict[key], meses = 3)
 
     print('013 - considerar no train set apenas as turbinas que tiveram falhas')
     train_turbines = {'df_generator': ['T11', 'T06'],'df_hydraulic': ['T06', 'T11'],'df_gen_bear': ['T07', 'T09'],'df_transformer': ['T07'],'df_gearbox': ['T09']}
     for key in df_train_comp_dict:
         df_train_comp_dict[key] = df_train_comp_dict[key][df_train_comp_dict[key]['Turbine_ID'].isin(train_turbines[key])]
+
+    print('011 - Adicionar medidas de alisamento')
+    for key in df_train_comp_dict:
+        df_train_comp_dict[key] = add_features(df_train_comp_dict[key], rolling_win_size=10)
+        df_test_comp_dict[key] = add_features(df_test_comp_dict[key], rolling_win_size=10)
 
     print('014 - separar entre x_train, x_test, y_train, y_test')
     x_train = df_train_comp_dict.copy()
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     y_train = df_train_comp_dict.copy()
     y_test = df_test_comp_dict.copy()
     # retirar as colunas que não devem entrar no x
-    cols_to_drop_train = ['Date', 'TTF','60_days', 'Component', 'Component_av', 'Component_sd']
+    cols_to_drop_train = ['Date', 'TTF','60_days', 'Component']
     for key in x_train:
         x_train[key] = x_train[key].drop(columns=cols_to_drop_train)
         x_test[key] = x_test[key].drop(columns=cols_to_drop_train)

@@ -9,17 +9,21 @@ from sklearn.ensemble import AdaBoostClassifier
 from termcolor import colored
 
 class Trainer():
-    def __init__(self, X, y, **kwargs):
-      
+    def __init__(self, x_train, y_train, x_test, y_test, **kwargs):
+
         self.pipeline = None
         self.kwargs = kwargs
+        self.x_train = x_train
+        self.y_train = y_train
+        self.x_test = x_test
+        self.y_test = y_test
 
     def get_estimator(self):
         """return estimator"""
         component = self.kwargs.get("component")
         if component == "df_generator":
             model = KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                                        metric_params=None, n_jobs=-1, n_neighbors=5, 
+                                        metric_params=None, n_jobs=-1, n_neighbors=5,
                                         p=2, weights='uniform')
         elif component == "df_hydraulic":
             model = LogisticRegression(C=10, class_weight=None, dual=False, fit_intercept=True,
@@ -45,29 +49,31 @@ class Trainer():
 
         return model
 
-    def set_pipeline(self, component):
+    def set_pipeline(self):
         """defines the pipeline as a class attribute"""
-        
-        preprocessing_pipe = Pipeline([('roll_avg', add_features()),
+        component = self.kwargs.get("component")
+        preprocessing_pipe = Pipeline([('roll_avg', add_features(self.x_train)),
                                         ('scaler', StandardScaler())])
 
         self.model_pipe = Pipeline([('preprocess', preprocessing_pipe),
                                     ('model', self.get_estimator(component))])
 
 
-    def train(self, component):
+    def train(self):
         """set and train the pipeline"""
         self.set_pipeline()
-        self.model_pipe.fit(X_train, y_train)
+        self.model_pipe.fit(self.x_train, self.y_train)
 
-    def evaluate(self, X_test, y_test, component):
+    def evaluate(self):
         """evaluates the pipeline on df_test and return metrics"""
-        y_pred = self.model_pipe.predict(X_test)
-        savings, cf_numbers, met_cre_df, dias_primeiro_TP = metrics_create_df(X_test, y_test, y_pred, component, days=10)
+        component = self.kwargs.get("component")
+        y_pred = self.model_pipe.predict(self.x_test)
+        savings, cf_numbers, met_cre_df, dias_primeiro_TP = metrics_create_df(self.x_test, self.y_test, self.y_pred, component, days=10)
         return savings
 
-    def save_model(self, component):
+    def save_model(self):
         """Save the model into a .joblib models folder"""
+        component = self.kwargs.get("component")
         joblib.dump(self.pipeline, f'model_{component}.joblib')
         print(colored(f'model_{component}.joblib saved locally', "green"))
 
@@ -78,12 +84,12 @@ if __name__ == "__main__":
     df = get_data()
     # clean data
     df = clean_data(df)
-    # set X and y
+    # set x and y
     # hold out
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    # x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
     # train
-    #for component in components: 
-        #trainer = Trainer(X_train[component], y_train[component])
+    #for component in components:
+        #trainer = Trainer(x_train[component], y_train[component])
         # print(colored("############  Training model   ############", "red"))
         # trainer.train()
         # print(colored("############  Evaluating model ############", "blue"))
