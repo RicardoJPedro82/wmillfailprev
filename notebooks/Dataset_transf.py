@@ -265,17 +265,19 @@ def add_features(df_in, rolling_win_size=15):
     df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
 
-def add_features_test(df_in, rolling_win_size=15):
+def add_features2(df_in, rolling_win_size=15):
     """Add rolling average and rolling standard deviation for sensors readings using fixed rolling window size.
-    Args:
-            df_in (dataframe)     : The input dataframe to be proccessed (training or test)
-            rolling_win_size (int): The window size, number of cycles for applying the rolling function
-    Returns:
-            dataframe: contains the input dataframe with additional rolling mean and std for each sensor
     """
+    cols_to_drop =['TTF','60_days','Turbine_ID', 'Date','Component','Component_sd','Component_av']
+
+    for i in cols_to_drop:
+        if i in df_in.columns:
+            df_in = df_in.drop(columns=i)
+        else:
+            pass
 
     sensor_cols = []
-    for i in df_in.columns[2:]:
+    for i in df_in.columns:
         sensor_cols.append(i)
 
     sensor_av_cols = [nm+'_av' for nm in sensor_cols]
@@ -308,7 +310,6 @@ def add_features_test(df_in, rolling_win_size=15):
         df_out = pd.concat([df_out,new_ftrs])
     df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
-
 
 def group_por_frequency(df, period='Dia', strategy='mean'):
     'Função para agregar o data-frame pela medida de tempo pretendida, periodo _Dia_ ou _Hora_'
