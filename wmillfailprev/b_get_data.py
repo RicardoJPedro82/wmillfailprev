@@ -161,16 +161,17 @@ def group_por_frequency(df, period='Dia', strategy='mean'):
 def add_features(df_in, rolling_win_size=15):
     """Add rolling average and rolling standard deviation for sensors readings using fixed rolling window size.
     """
-    cols_to_drop =['TTF','Component','Component_sd','Component_av']
+    cols =['Turbine_ID', 'Date', 'TTF', '60_days']
+    other_cols = []
+    for i in df_in.columns:
+        if i not in cols:
+            other_cols.append(i)
+    all_cols = cols + other_cols
 
-    for i in cols_to_drop:
-        if i in df_in.columns:
-            df_in = df_in.drop(columns=i)
-        else:
-            pass
+    df_in = df_in[all_cols]
 
     sensor_cols = []
-    for i in df_in.columns[2:]:
+    for i in df_in.columns[4:]:
         sensor_cols.append(i)
 
     sensor_av_cols = [nm+'_av' for nm in sensor_cols]
