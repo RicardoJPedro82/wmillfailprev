@@ -40,13 +40,12 @@ class CustomStandardScaler(BaseEstimator, TransformerMixin):
         return X_turbine_all
 
 class Trainer():
-    def __init__(self, x_train, y_train, x_test, **kwargs):
+    def __init__(self, x_train, y_train, **kwargs):
 
         self.pipeline = None
         self.kwargs = kwargs
         self.x_train = x_train
         self.y_train = y_train
-        self.x_test = x_test
         self.component = self.kwargs.get("component")
         # self.model = model
 
@@ -84,9 +83,9 @@ class Trainer():
         self.model.fit(self.x_train, self.y_train)
         return self.model
 
-    def predict(self):
+    def predict(self, x_test):
         """Get the predictions of the selected model"""
-        return self.model.predict(self.x_test)
+        return self.model.predict(x_test)
 
 
 

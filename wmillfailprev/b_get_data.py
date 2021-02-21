@@ -102,7 +102,7 @@ def sig_fail_merge_dfs(sig_df, fail_df, component):
     return df_merged
 
 def fill_na_by_turbine(df, turbines_list):
-    df_ = pd.DataFrame(columns=df.columns)
+    df_ = pd.DataFrame(columns=df.columns, dtype='int64')
     for turbine in turbines_list:
         df1 = df.loc[df['Turbine_ID']==turbine]
         if df1['Component'].nunique()>1:
@@ -111,10 +111,12 @@ def fill_na_by_turbine(df, turbines_list):
             index = index[['date','Timestamp', 'Turbine_ID']]
             df_merged = df1.merge(index, how='left', on=['Turbine_ID','Timestamp'])
             df_merged = df_merged.fillna(method='bfill')
+
             #If there is not a failure after, hold present date
             df_merged['date'] = df_merged['date'].fillna(df_merged['Timestamp'])
+
             df_merged['TTF'] = round((df_merged['date'] - df_merged['Timestamp']) / np.timedelta64(1, 'D'),0)
-            # df_merged = df_merged.fillna(method='Bfill')
+            df_merged = df_merged.fillna(method='Bfill')
         else:
             df_merged = df1
             df_merged['date'] = df_merged['Timestamp']
@@ -126,8 +128,12 @@ def fill_na_by_turbine(df, turbines_list):
         #df_final['TTF'] = df_final['TTF'].dt.days
 
         df_ = pd.concat([df_, df_final])
-
+        df_['Timestamp'] = pd.to_datetime(df_['Timestamp'])
     return df_
+
+def fill_na_by_turb_predict(df, turbines_list):
+    df = df.fillna(method='bfill')
+    return df
 
 def Failure_Time_Horizon(days, period):
     if 2 <= days <= period:
@@ -204,6 +210,54 @@ def add_features(df_in, rolling_win_size=15):
         df_out = pd.concat([df_out,new_ftrs])
     df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
     return df_out
+
+def add_feat_predict(df_in, rolling_win_size=15):
+    """Add rolling average and rolling standard deviation for sensors readings using fixed rolling window size.
+    """
+    cols =['Turbine_ID', 'Date']
+    other_cols = []
+    for i in df_in.columns:
+        if i not in cols:
+            other_cols.append(i)
+    all_cols = cols + other_cols
+
+    df_in = df_in[all_cols]
+
+    sensor_cols = []
+    for i in df_in.columns[2:]:
+        sensor_cols.append(i)
+
+    sensor_av_cols = [nm+'_av' for nm in sensor_cols]
+    sensor_sd_cols = [nm+'_sd' for nm in sensor_cols]
+
+    df_out = pd.DataFrame()
+
+    ws = rolling_win_size
+
+    #calculate rolling stats for each engine id
+
+    for m_id in pd.unique(df_in.Turbine_ID):
+
+        # get a subset for each engine sensors
+        df_engine = df_in[df_in['Turbine_ID'] == m_id]
+        df_sub = df_engine[sensor_cols]
+
+        # get rolling mean for the subset
+        av = df_sub.rolling(ws, min_periods=1).mean()
+        av.columns = sensor_av_cols
+
+        # get the rolling standard deviation for the subset
+        sd = df_sub.rolling(ws, min_periods=1).std().fillna(0)
+        sd.columns = sensor_sd_cols
+
+        # combine the two new subset dataframes columns to the engine subset
+        new_ftrs = pd.concat([df_engine,av,sd], axis=1)
+
+        # add the new features rows to the output dataframe
+        df_out = pd.concat([df_out,new_ftrs])
+    df_out = df_out.sort_values(by=['Turbine_ID', 'Date']   )
+    return df_out
+
 
 def prepare_test_df(df, meses=3):
     if 'Timestamp' in df.keys():

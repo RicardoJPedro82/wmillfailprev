@@ -48,11 +48,13 @@ if __name__ == "__main__":
     component_list = ['GENERATOR', 'HYDRAULIC_GROUP', 'GENERATOR_BEARING', 'TRANSFORMER','GEARBOX']
     for i, key in enumerate(comp_prep_df_dict):
         comp_prep_df_dict[key] = sig_fail_merge_dfs(sig_df=comp_prep_df_dict[key],fail_df=failures_df,component=component_list[i])
+        print(comp_prep_df_dict[key].shape)
 
     print('007 - Fillna by turbine')
     turbine_list = ['T11', 'T06', 'T01', 'T09', 'T07']
     for i, key in enumerate(comp_prep_df_dict):
         comp_prep_df_dict[key] = fill_na_by_turbine(comp_prep_df_dict[key],turbine_list)
+        print(comp_prep_df_dict[key].shape)
 
     print('008 - Criação da variável alvo')
     for key in comp_prep_df_dict:
@@ -65,10 +67,12 @@ if __name__ == "__main__":
     print('010 - agrupar pela medida de tempo seleccionada')
     for key in comp_prep_df_dict:
         comp_prep_df_dict[key] = group_por_frequency(comp_prep_df_dict[key], period='Dia')
+        print(comp_prep_df_dict[key].shape)
 
     print('013 - Adicionar medidas de alisamento')
     for key in comp_prep_df_dict:
         comp_prep_df_dict[key] = add_features(comp_prep_df_dict[key], rolling_win_size=10)
+        print(comp_prep_df_dict[key].shape)
 
     print('011 - Separar entre treino e teste')
     df_train_comp_dict = {}
@@ -103,27 +107,33 @@ if __name__ == "__main__":
     for key in x_train:
         x_train[key] = x_train[key].drop(columns=['Turbine_ID'])
         x_test[key] = x_test[key].drop(columns=['Turbine_ID'])
+    print(x_train['df_gearbox'].columns)
 
     print('014 - fazer o fit do CustomTransfMiguel para cada componente à pedreiro')
     print('014.1 - df_generator')
     scaler_df_generator = StandardScaler()
     scaler_df_generator.fit(x_train['df_generator'])
+    # print(scaler_df_generator.mean_.shape, x_train['df_generator'].shape)
     joblib.dump(scaler_df_generator, 'scaler_df_generator.joblib')
     print('014.2 - df_hydraulic')
     scaler_df_hydraulic = StandardScaler()
     scaler_df_hydraulic.fit(x_train['df_hydraulic'])
+    # print(scaler_df_generator.mean_.shape, x_train['df_hydraulic'].shape)
     joblib.dump(scaler_df_hydraulic, 'scaler_df_hydraulic.joblib')
     print('014.3 - df_gen_bear')
     scaler_df_gen_bear = StandardScaler()
     scaler_df_gen_bear.fit(x_train['df_gen_bear'])
+    # print(scaler_df_generator.mean_.shape, x_train['df_gen_bear'].shape)
     joblib.dump(scaler_df_gen_bear, 'scaler_df_gen_bear.joblib')
     print('014.4 - df_transformer')
     scaler_df_transformer = StandardScaler()
     scaler_df_transformer.fit(x_train['df_transformer'])
+    # print(scaler_df_generator.mean_.shape, x_train['df_transformer'].shape)
     joblib.dump(scaler_df_transformer, 'scaler_df_transformer.joblib')
     print('014.5 - df_gearbox')
     scaler_df_gearbox = StandardScaler()
     scaler_df_gearbox.fit(x_train['df_gearbox'])
+    # print(scaler_df_generator.mean_.shape, x_train['df_gearbox'].shape)
     joblib.dump(scaler_df_gearbox, 'scaler_df_gearbox.joblib')
 
     print('016 - aplicar o scale com o fit efectuado no treino')
@@ -145,32 +155,32 @@ if __name__ == "__main__":
         print(x_train[i].shape, y_train[i].shape)
 
 
-    generator_model = tr(x_train=x_train['df_generator'], y_train=y_train['df_generator'], x_test=x_test['df_generator'], component='df_generator')
+    generator_model = tr(x_train=x_train['df_generator'], y_train=y_train['df_generator'], component='df_generator')
     generator_model.train()
     joblib.dump(generator_model, 'generator_model.joblib')
 
-    hydraulic_model = tr(x_train=x_train['df_hydraulic'], y_train=y_train['df_hydraulic'], x_test=x_test['df_hydraulic'], component='df_hydraulic')
+    hydraulic_model = tr(x_train=x_train['df_hydraulic'], y_train=y_train['df_hydraulic'], component='df_hydraulic')
     hydraulic_model.train()
     joblib.dump(hydraulic_model, 'hydraulic_model.joblib')
 
-    gen_bear_model = tr(x_train=x_train['df_gen_bear'], y_train=y_train['df_gen_bear'], x_test=x_test['df_gen_bear'], component='df_gen_bear')
+    gen_bear_model = tr(x_train=x_train['df_gen_bear'], y_train=y_train['df_gen_bear'], component='df_gen_bear')
     gen_bear_model.train()
     joblib.dump(gen_bear_model, 'gen_bear_model.joblib')
 
-    transformer_model = tr(x_train=x_train['df_transformer'], y_train=y_train['df_transformer'], x_test=x_test['df_transformer'], component='df_transformer')
+    transformer_model = tr(x_train=x_train['df_transformer'], y_train=y_train['df_transformer'], component='df_transformer')
     transformer_model.train()
     joblib.dump(transformer_model, 'transformer_model.joblib')
 
-    gearbox_model = tr(x_train=x_train['df_gearbox'], y_train=y_train['df_gearbox'], x_test=x_test['df_gearbox'], component='df_gearbox')
+    gearbox_model = tr(x_train=x_train['df_gearbox'], y_train=y_train['df_gearbox'], component='df_gearbox')
     gearbox_model.train()
     joblib.dump(gearbox_model, 'gearbox_model.joblib')
 
     print('018 - Obter a previsão para a métrica de poupança')
-    y_pred_generator = generator_model.predict()
-    y_pred_hydraulic = hydraulic_model.predict()
-    y_pred_gen_bear = gen_bear_model.predict()
-    y_pred_transformer = transformer_model.predict()
-    y_pred_gearbox = gearbox_model.predict()
+    y_pred_generator = generator_model.predict(x_test['df_generator'])
+    y_pred_hydraulic = hydraulic_model.predict(x_test['df_hydraulic'])
+    y_pred_gen_bear = gen_bear_model.predict(x_test['df_gen_bear'])
+    y_pred_transformer = transformer_model.predict(x_test['df_transformer'])
+    y_pred_gearbox = gearbox_model.predict(x_test['df_gearbox'])
 
     print('019 - poupanças')
     poupancas_generator, cf_numbers_pred_gen, df_resultados = metrics_create_df(df_test_comp_dict['df_generator'], y_test['df_generator'], y_pred_generator, 'df_generator', days=20)
