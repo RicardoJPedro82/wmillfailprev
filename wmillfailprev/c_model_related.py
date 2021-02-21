@@ -40,22 +40,19 @@ class CustomStandardScaler(BaseEstimator, TransformerMixin):
         return X_turbine_all
 
 class Trainer():
-    def __init__(self, x_train, y_train, x_test, **kwargs):
+    def __init__(self, x_train, y_train, **kwargs):
 
         self.pipeline = None
         self.kwargs = kwargs
         self.x_train = x_train
         self.y_train = y_train
-        self.x_test = x_test
         self.component = self.kwargs.get("component")
         # self.model = model
 
     def get_estimator(self):
         """return estimator"""
         if self.component == "df_generator":
-            model = KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                                        metric_params=None, n_jobs=-1, n_neighbors=5,
-                                        p=2, weights='uniform')
+            model =  KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',metric_params=None, n_jobs=None, n_neighbors=5, p=2,weights='uniform')
         elif self.component == "df_hydraulic":
             model = LogisticRegression(C=10, class_weight=None, dual=False, fit_intercept=True,
                                         intercept_scaling=1, max_iter=1000, multi_class='warn',
@@ -86,9 +83,9 @@ class Trainer():
         self.model.fit(self.x_train, self.y_train)
         return self.model
 
-    def predict(self):
+    def predict(self, x_test):
         """Get the predictions of the selected model"""
-        return self.model.predict(self.x_test)
+        return self.model.predict(x_test)
 
 
 
@@ -213,4 +210,20 @@ def metrics_create_df(df_test_in, y_test_in, y_pred_in, component, days=10):
         tp_savings = 0
     Savings = tp_savings - fp_costs - fn_costs
 
-    return Savings, cf_numbers
+    return Savings, cf_numbers, met_cre_df
+
+
+
+def scaler_antigo(df_train, df_test, scaler='StandardScaler'):
+    for m_id in pd.unique(df_train.Turbine_ID):
+        X_train = df_train.drop(columns=['Turbine_ID'])
+        X_test = df_test.drop(columns=['Turbine_ID'])
+        if scaler == 'MinMaxScaler':
+            sc = MinMaxScaler()
+            X_train_scale = sc.fit_transform(df)
+            X_test_scale = sc.transform(X_test)
+        else:
+            sc = StandardScaler()
+            X_train_scale = sc.fit_transform(X_train)
+            X_test_scale = sc.transform(X_test)
+    return X_train_scale, X_test_scale
